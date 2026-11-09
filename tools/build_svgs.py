@@ -700,6 +700,24 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
             + f'<text class="mono" x="-38" y="7.5" font-size="6.5" font-weight="700" fill="{t["link"]}">LL</text>')
     g.append(f'<g>{ship}<animateMotion dur="120s" begin="-35s" repeatCount="indefinite" path="M1260,{G+80} H-60"/></g>')
 
+    # a small green crocodile, mostly submerged, swimming downstream (head to the right)
+    cg, cd = t["success"], ("#15803d" if mode == "light" else "#166534")
+    croc = (
+        f'<path d="M-30,1 Q-40,-1 -50,2" stroke="{cg}" stroke-width="3" fill="none" stroke-linecap="round">'
+        f'<animate attributeName="d" dur="1.6s" repeatCount="indefinite" '
+        f'values="M-30,1 Q-40,-1 -50,2;M-30,1 Q-40,3 -50,0;M-30,1 Q-40,-1 -50,2"/></path>'
+        f'<path d="M-32,1 Q-24,-6 -6,-6 Q6,-6 12,-3 L28,-3 Q32,-2.5 32,0.5 L32,1 Z" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
+        + "".join(f'<path d="M{x},-5.6 l2,-2.6 l2,2.6 Z" fill="{cd}"/>' for x in (-22, -16, -10, -4, 2))
+        + f'<circle cx="15" cy="-5.5" r="3.2" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
+        f'<circle cx="15.4" cy="-6" r="1.8" fill="{t["card"]}"/><circle cx="16" cy="-6" r=".9" fill="#1f2937"/>'
+        f'<circle cx="29" cy="-3.2" r="1" fill="{cd}"/>'
+        f'<path d="M-36,4 H36" stroke="{t["primary"]}" stroke-width="1.2" stroke-dasharray="6 5" opacity=".45"/>'
+        f'<path d="M34,2 l6,-2 M34,3 l6,2" stroke="{t["primary"]}" stroke-width="1" opacity=".45"/>'
+    )
+    g.append(f'<g><g><g transform="scale(1.7)">{croc}</g><animateTransform attributeName="transform" type="translate" dur="2.2s" '
+             f'repeatCount="indefinite" values="0,0;0,1.5;0,0"/></g>'
+             f'<animateMotion dur="85s" begin="-50s" repeatCount="indefinite" path="M-60,{G+44} H1260"/></g>')
+
     if night or dusk:
         g.append(f'<rect width="{W}" height="{H}" fill="{NIGHT[mode]}" opacity="{(0.5 if mode == "light" else 0.38) if night else 0.12}"/>')
     g += L
