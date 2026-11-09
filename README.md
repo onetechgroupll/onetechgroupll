@@ -6,8 +6,10 @@
 </a>
 
 <p align="center">
-  <a href="https://onetech.group"><img alt="onetech.group" src="https://img.shields.io/badge/onetech.group-1d48c0?style=flat-square&logo=googlechrome&logoColor=white"></a>
-  <img alt="Based in Germany" src="https://img.shields.io/badge/based_in-Germany-5e5b56?style=flat-square">
+  <a href="https://www.linkedin.com/in/lucaslingensll/"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/btn-linkedin-dark.svg"><img alt="LinkedIn" src="./assets/btn-linkedin-light.svg" height="40"></picture></a>
+  <a href="https://onetech.group"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/btn-web-dark.svg"><img alt="onetech.group" src="./assets/btn-web-light.svg" height="40"></picture></a>
+  <br>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="./assets/open-to-dark.svg"><img alt="Based in Germany. Open to tech partnerships and talent." src="./assets/open-to-light.svg" height="32"></picture>
 </p>
 
 ### What I build
@@ -40,13 +42,18 @@
 ### Contributions
 
 <picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/stats-dark.svg">
+  <img alt="Contribution stats for the last 12 months, including private repositories. Updated hourly." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/stats-light.svg" width="100%">
+</picture>
+
+<picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/snake-dark.svg">
   <img alt="Contribution graph being eaten by a snake" src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/snake-light.svg" width="100%">
 </picture>
 
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="./assets/skyline-dark.svg">
-  <img alt="Düsseldorf skyline: Rheinturm with its Lichtzeitpegel clock counting the seconds, the Stadttor with an LL rooftop sign, Neuer Zollhof, the Altstadt with St. Lambertus, the Rheinkniebrücke and boats on the Rhine." src="./assets/skyline-light.svg" width="100%">
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/skyline-dark.svg">
+  <img alt="Düsseldorf skyline: Rheinturm with its Lichtzeitpegel clock counting the seconds, the Stadttor with an LL rooftop sign, Neuer Zollhof, the Altstadt with St. Lambertus, the Rheinkniebrücke and boats on the Rhine. Time of day and weather follow Düsseldorf live." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/skyline-light.svg" width="100%">
 </picture>
 
-<sub>Most of my work lives in private repos. Graphics are hand-built SVG in the <a href="https://github.com/One-Tech-Group-GmbH/otg-design-system">OTG Design System</a> palette. Regenerate with <code>python3 tools/build_svgs.py</code>.</sub>
+<sub>Most of my work lives in private repos. Graphics are hand-built SVG in the <a href="https://github.com/One-Tech-Group-GmbH/otg-design-system">OTG Design System</a> palette. Stats and the skyline (time of day + live weather via Open-Meteo) rebuild hourly. Regenerate with <code>python3 tools/build_svgs.py</code>.</sub>

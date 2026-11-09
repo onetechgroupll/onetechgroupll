@@ -408,10 +408,12 @@ CLOCK_SEP = {"light": "#dc2626", "dark": "#f87171"}  # Lichtzeitpegel separators
 LINE = {"light": "#bdb6ab", "dark": "#55514c"}
 
 
-def skyline(t, mode, crop=None, label=True):
+def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None):
     """Duesseldorf skyline as flat line illustration.
 
     crop=(x, y, w, h) renders a viewBox crop (used for the square avatar).
+    phase: day | dusk | night   weather: clear | partly | cloudy | fog | rain | snow | storm
+    Everything that emits light goes into L and is drawn above the night overlay.
     """
     W, H = 1200, 400
     G = 300  # promenade / waterline
@@ -429,11 +431,14 @@ def skyline(t, mode, crop=None, label=True):
 @keyframes beacon{{0%,60%,100%{{opacity:.15}}70%,85%{{opacity:1}}}}
 .beacon{{animation:beacon 2s steps(1) infinite}}
 """
-    g = []
+    night, dusk = phase == "night", phase == "dusk"
+    css += SKY_CSS
+    g, L = [], []
     vb = crop or (0, 0, W, H)
     g.append(f'<defs><clipPath id="frame"><rect x="{vb[0]}" y="{vb[1]}" width="{vb[2]}" height="{vb[3]}" rx="{0 if crop else 12}"/></clipPath></defs>')
     g.append('<g clip-path="url(#frame)">')
     g.append(f'<rect width="{W}" height="{H}" fill="{t["page"]}"/>')
+    g += sky_layers(t, mode, phase, weather, G)
 
     def bldg(pts, fill=None, stroke=st, extra=""):
         d = "M" + " L".join(f"{x},{y}" for x, y in pts) + " Z"
@@ -446,9 +451,10 @@ def skyline(t, mode, crop=None, label=True):
                 x, y = x0 + c * dx, y0 + r * dy
                 out.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{t["border"]}"/>')
                 k = (r * 7 + c * 13 + seed) % 23
-                if k in (0, 5):
-                    out.append(f'<rect class="win" style="animation-delay:{(k + r + c) % 9}s" x="{x}" y="{y}" '
-                               f'width="{w}" height="{h}" fill="{on}"/>')
+                if k in ((0, 5, 9, 14, 18) if night else (0, 9, 14) if dusk else (0, 5)):
+                    cls = "" if night and k in (9, 14) else "win"
+                    L.append(f'<rect class="{cls}" style="animation-delay:{(k + r + c) % 9}s" x="{x}" y="{y}" '
+                             f'width="{w}" height="{h}" fill="{on}"/>')
         return "".join(out)
 
     # birds (back)
@@ -495,9 +501,9 @@ def skyline(t, mode, crop=None, label=True):
     bx, by = sxt0 + 4, stop - 30
     g.append(f'<line x1="{bx+8}" y1="{stop}" x2="{bx+8}" y2="{by+22}" stroke="{st}" stroke-width="1.5"/>')
     g.append(f'<line x1="{bx+32}" y1="{stop}" x2="{bx+32}" y2="{by+22}" stroke="{st}" stroke-width="1.5"/>')
-    g.append(f'<rect class="glow" x="{bx-4}" y="{by-4}" width="48" height="30" rx="6" fill="{t["primary"]}" opacity=".35"/>')
-    g.append(f'<rect x="{bx}" y="{by}" width="40" height="22" rx="4" fill="{t["primary"]}"/>')
-    g.append(f'<text class="mono sign" x="{bx+20}" y="{by+16.5}" text-anchor="middle" font-size="16" '
+    L.append(f'<rect class="glow" x="{bx-4}" y="{by-4}" width="48" height="30" rx="6" fill="{t["primary"]}" opacity=".35"/>')
+    L.append(f'<rect x="{bx}" y="{by}" width="40" height="22" rx="4" fill="{t["primary"]}"/>')
+    L.append(f'<text class="mono sign" x="{bx+20}" y="{by+16.5}" text-anchor="middle" font-size="16" '
              f'font-weight="700" letter-spacing="1" fill="#ffffff">LL</text>')
 
     # 5. Rheinturm with Lichtzeitpegel
@@ -509,21 +515,21 @@ def skyline(t, mode, crop=None, label=True):
     g.append(f'<rect x="{rx-11}" y="61" width="22" height="7" rx="3" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
     g.append(f'<line x1="{rx}" y1="61" x2="{rx}" y2="18" stroke="{st}" stroke-width="2"/>')
     g.append(f'<line x1="{rx}" y1="38" x2="{rx}" y2="18" stroke="{t["muted"]}" stroke-width="1"/>')
-    g.append(f'<circle class="beacon" cx="{rx}" cy="16" r="2.6" fill="{CLOCK_SEP[mode]}"/>')
+    L.append(f'<circle class="beacon" cx="{rx}" cy="16" r="2.6" fill="{CLOCK_SEP[mode]}"/>')
     # clock: hours tens(2) hours(9) | min tens(5) min(9) | sec tens(5) sec(9); seconds at the bottom
     groups = [("h10", 2, None), ("h1", 9, None), ("m10", 5, 3600), ("m1", 9, 600), ("s10", 5, 60), ("s1", 9, 10)]
     y = 104
     step = 4.1
     for gi, (_, n, period) in enumerate(groups):
         if gi:
-            g.append(f'<rect x="{rx-1.6}" y="{y-1}" width="3.2" height="2" fill="{CLOCK_SEP[mode]}"/>')
+            L.append(f'<rect x="{rx-1.6}" y="{y-1}" width="3.2" height="2" fill="{CLOCK_SEP[mode]}"/>')
             y += step
         # lamp k (1-based from the bottom of the group) is lit once the digit >= k
         for k in range(n, 0, -1):
             g.append(f'<circle cx="{rx}" cy="{y:.1f}" r="1.25" fill="{t["idle"]}"/>')
             if period:
                 frac = k / (n + 1)
-                g.append(f'<circle cx="{rx}" cy="{y:.1f}" r="1.25" fill="{on}" opacity="0">'
+                L.append(f'<circle cx="{rx}" cy="{y:.1f}" r="1.25" fill="{on}" opacity="0">'
                          f'<animate attributeName="opacity" values="0;1" keyTimes="0;{frac:.4f}" dur="{period}s" '
                          f'calcMode="discrete" repeatCount="indefinite"/></circle>')
             y += step
@@ -563,7 +569,7 @@ def skyline(t, mode, crop=None, label=True):
     for i, (beg, rev) in enumerate([(0, False), (-3.5, True), (-7, False)]):
         path = f"M810,{deck-2} H1200" if not rev else f"M1200,{deck-2} H810"
         col = on if i != 1 else CLOCK_SEP[mode]
-        g.append(f'<rect x="-4" y="-2" width="8" height="3.4" rx="1.5" fill="{col}"><animateMotion dur="9s" begin="{beg}s" '
+        L.append(f'<rect x="-4" y="-2" width="8" height="3.4" rx="1.5" fill="{col}"><animateMotion dur="9s" begin="{beg}s" '
                  f'repeatCount="indefinite" path="{path}"/></rect>')
 
     # promenade + trees
@@ -601,9 +607,18 @@ def skyline(t, mode, crop=None, label=True):
             + f'<text class="mono" x="-38" y="7.5" font-size="6.5" font-weight="700" fill="{t["link"]}">LL</text>')
     g.append(f'<g>{ship}<animateMotion dur="120s" begin="-35s" repeatCount="indefinite" path="M1260,{G+80} H-60"/></g>')
 
+    if night or dusk:
+        g.append(f'<rect width="{W}" height="{H}" fill="{NIGHT[mode]}" opacity="{(0.5 if mode == "light" else 0.38) if night else 0.12}"/>')
+    g += L
+    g += weather_fx(t, mode, weather, G, W, H)
+
     if label:
-        g.append(f'<text class="mono" x="32" y="44" font-size="13" font-weight="700" letter-spacing="2.4" fill="{t["link"]}">DÜSSELDORF</text>')
-        g.append(f'<text class="mono" x="32" y="62" font-size="10.5" letter-spacing="1" fill="{t["muted"]}">51.23° N · 6.77° E</text>')
+        g.append(f'<text class="mono" x="32" y="44" font-size="13" font-weight="700" letter-spacing="2.4" fill="{"#a9bcf0" if night and mode == "light" else t["link"]}">DÜSSELDORF</text>')
+        sub = "51.23° N · 6.77° E"
+        if temp is not None:
+            sub += f" · {temp:.0f} °C · {WEATHER_LABEL[weather]}"
+        lab = t["muted"] if not night else ("#c9cfe0" if mode == "light" else t["muted"])
+        g.append(f'<text class="mono" x="32" y="62" font-size="10.5" letter-spacing="1" fill="{lab}">{sub}</text>')
 
     g.append('</g>')
     if crop is None:
@@ -616,21 +631,319 @@ def skyline(t, mode, crop=None, label=True):
     return out
 
 
+NIGHT = {"light": "#16203a", "dark": "#05070d"}
+WEATHER_LABEL = {"clear": "clear", "partly": "partly cloudy", "cloudy": "cloudy", "fog": "fog",
+                 "rain": "rain", "snow": "snow", "storm": "thunderstorm"}
+SKY_CSS = """
+@keyframes drift{from{transform:translateX(-260px)}to{transform:translateX(1460px)}}
+.cloud{animation:drift linear infinite}
+@keyframes twinkle{0%,100%{opacity:.25}50%{opacity:1}}
+.star{animation:twinkle 3s ease-in-out infinite}
+@keyframes fogmove{0%,100%{transform:translateX(-40px)}50%{transform:translateX(40px)}}
+.fog{animation:fogmove 18s ease-in-out infinite}
+@keyframes flash{0%,88%,92%,96%,100%{opacity:0}89%,94%{opacity:.55}}
+.flash{opacity:0;animation:flash 9s steps(1) infinite}
+"""
+
+
+def sky_layers(t, mode, phase, weather, G):
+    """Background: night/dusk sky, sun or moon, stars, clouds (all behind the buildings)."""
+    W = 1200
+    out = []
+    night, dusk = phase == "night", phase == "dusk"
+    if night:
+        out.append(f'<rect width="{W}" height="{G}" fill="{NIGHT[mode]}" opacity="{0.92 if mode == "light" else 0.75}"/>')
+    if dusk:
+        out.append('<defs><linearGradient id="dusk" x1="0" y1="0" x2="0" y2="1">'
+                   '<stop offset="0" stop-color="#f97316" stop-opacity="0"/>'
+                   f'<stop offset="1" stop-color="#f97316" stop-opacity="{0.3 if mode == "light" else 0.22}"/></linearGradient></defs>')
+        out.append(f'<rect width="{W}" height="{G}" fill="url(#dusk)"/>')
+    if weather in ("cloudy", "rain", "snow", "storm", "fog") and not night:
+        out.append(f'<rect width="{W}" height="{G}" fill="{t["section"]}" opacity=".7"/>')
+    open_sky = weather in ("clear", "partly")
+    if night and open_sky:
+        for i in range(42):
+            x, y = (i * 263) % 1180 + 10, (i * 97) % 190 + 12
+            out.append(f'<circle class="star" style="animation-delay:{i % 7 * .45:.2f}s" cx="{x}" cy="{y}" '
+                       f'r="{1.1 if i % 3 else 1.6}" fill="#f4f1ea"/>')
+        out.append('<circle cx="1090" cy="64" r="20" fill="#f4f1ea"/>'
+                   f'<circle cx="1101" cy="57" r="18" fill="{NIGHT[mode]}"/>')
+    elif open_sky and not night:
+        sx, sy, r = (1080, 236, 34) if dusk else (1070, 74, 24)
+        col = "#f97316" if dusk else ("#f5b301" if mode == "light" else "#fbbf24")
+        out.append(f'<circle cx="{sx}" cy="{sy}" r="{r + 14}" fill="{col}" opacity=".18"/>'
+                   f'<circle cx="{sx}" cy="{sy}" r="{r}" fill="{col}"/>')
+    n = {"clear": 0, "partly": 3, "cloudy": 6, "fog": 3, "rain": 6, "snow": 6, "storm": 7}[weather]
+    cfill = ("#3a4258" if mode == "light" else "#2a2a2e") if night else ("#ffffff" if mode == "light" else "#2c2b28")
+    if weather in ("rain", "storm"):
+        cfill = ("#d9d6d0" if mode == "light" else "#3a3835") if not night else cfill
+    for i in range(n):
+        y = 36 + (i * 41) % 130
+        s = 0.8 + (i % 3) * 0.25
+        dur = 140 + (i * 37) % 90
+        out.append(f'<g class="cloud" style="animation-duration:{dur}s;animation-delay:-{(i * 53) % dur}s">'
+                   f'<g transform="translate(0,{y}) scale({s})">'
+                   f'<path d="M0,30 a18,18 0 0 1 16,-22 a26,26 0 0 1 46,-4 a20,20 0 0 1 34,12 a14,14 0 0 1 4,14 Z" '
+                   f'fill="{cfill}" stroke="{LINE[mode]}" stroke-width="1.2" opacity=".95"/></g></g>')
+    return out
+
+
+def weather_fx(t, mode, weather, G, W, H):
+    """Foreground precipitation, fog and lightning."""
+    out = []
+    if weather in ("rain", "storm"):
+        out.append('<defs><pattern id="rain" width="34" height="46" patternUnits="userSpaceOnUse">'
+                   f'<line x1="6" y1="0" x2="2" y2="12" stroke="{t["primary"]}" stroke-width="1.2" opacity=".45"/>'
+                   f'<line x1="24" y1="22" x2="20" y2="34" stroke="{t["primary"]}" stroke-width="1.2" opacity=".35"/>'
+                   '<animateTransform attributeName="patternTransform" type="translate" from="0 0" to="-12 46" '
+                   'dur=".55s" repeatCount="indefinite"/></pattern></defs>')
+        out.append(f'<rect width="{W}" height="{H}" fill="url(#rain)"/>')
+    if weather == "snow":
+        out.append('<defs><pattern id="snow" width="40" height="60" patternUnits="userSpaceOnUse">'
+                   '<circle cx="8" cy="10" r="1.8" fill="#ffffff"/><circle cx="28" cy="38" r="1.4" fill="#ffffff"/>'
+                   '<animateTransform attributeName="patternTransform" type="translate" from="0 0" to="10 60" '
+                   'dur="5s" repeatCount="indefinite"/></pattern></defs>')
+        out.append(f'<rect width="{W}" height="{H}" fill="url(#snow)" stroke="none"/>')
+        out.append(f'<rect width="{W}" height="{H}" fill="url(#snow)" opacity=".6" transform="translate(17,23)"/>')
+    if weather == "fog":
+        for i, (y, h, o) in enumerate([(170, 60, .55), (225, 50, .65), (275, 40, .7)]):
+            out.append(f'<rect class="fog" style="animation-delay:-{i * 5}s" x="-60" y="{y}" width="{W + 120}" '
+                       f'height="{h}" rx="{h / 2}" fill="{t["page"]}" opacity="{o}"/>')
+    if weather == "storm":
+        out.append(f'<rect class="flash" width="{W}" height="{H}" fill="#ffffff"/>')
+        out.append('<path class="flash" d="M820,40 L796,112 L816,112 L792,190 L846,96 L824,96 L846,40 Z" fill="#fde68a"/>')
+    return out
+
+
 AVATAR_CROP = (262, 14, 380, 380)  # centred on LL sign + Rheinturm for the circular avatar mask
 
 
+# ---------------------------------------------------------------- stats
+SERIES_1 = {"light": "#223e89", "dark": "#3f65cf"}  # --ds-chart-series-1
+
+
+def calendar_stats(days):
+    """days: [(iso_date, count)] sorted ascending -> dict of derived numbers."""
+    import datetime as dt
+    total = sum(c for _, c in days)
+    longest = cur = 0
+    for _, c in days:
+        cur = cur + 1 if c > 0 else 0
+        longest = max(longest, cur)
+    i = len(days) - 1
+    if days and days[-1][1] == 0:  # today not started yet
+        i -= 1
+    current = 0
+    while i >= 0 and days[i][1] > 0:
+        current += 1
+        i -= 1
+    wd = [0] * 7
+    for d, c in days:
+        wd[dt.date.fromisoformat(d).weekday()] += c
+    names = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]
+    months = {}
+    for d, c in days:
+        months[d[:7]] = months.get(d[:7], 0) + c
+    keys = sorted(months)[-12:]
+    return dict(total=total, longest=longest, current=current, weekday=names[wd.index(max(wd))],
+                months=[(k, months[k]) for k in keys])
+
+
+def stats(t, mode, st):
+    W, H = 1200, 300
+    css = font_css(mono_bold=False) + BASE_CSS + """
+@keyframes grow{from{transform:scaleY(0)}to{transform:scaleY(1)}}
+@media (prefers-reduced-motion: no-preference){.bar{transform-box:fill-box;transform-origin:50% 100%;
+animation:grow .9s cubic-bezier(.2,.7,.3,1) both}}
+"""
+    g = []
+    tiles = [(f"{st['total']:,}", "contributions", "last 12 months"),
+             (f"{st['longest']}", "days", "longest streak"),
+             (f"{st['current']}", "days", "current streak"),
+             (st["weekday"], "", "busiest weekday")]
+    tw, th, gap = 280, 136, 20
+    for i, (num, unit, lab) in enumerate(tiles):
+        x, y = (i % 2) * (tw + gap) + .5, (i // 2) * (th + gap + 8) + .5
+        g.append(f'<rect x="{x}" y="{y}" width="{tw}" height="{th}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>')
+        g.append(f'<text class="mono" x="{x+22}" y="{y+34}" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">{lab.upper()}</text>')
+        fs = 42 if len(num) < 8 else 34
+        g.append(f'<text class="sans" x="{x+20}" y="{y+96}" font-size="{fs}" font-weight="640" letter-spacing="-1.2" '
+                 f'fill="{t["text"]}">{num}<tspan class="mono" dx="8" font-size="13" font-weight="400" letter-spacing="0" '
+                 f'fill="{t["secondary"]}">{unit}</tspan></text>')
+    # monthly bars (single series: no legend, title names it)
+    cx, cw = 600.5, 599
+    g.append(f'<rect x="{cx}" y=".5" width="{cw-1}" height="{H-1}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>')
+    g.append(f'<text class="sans" x="{cx+24}" y="38" font-size="16" font-weight="600" fill="{t["text"]}">Contributions per month</text>')
+    g.append(f'<text class="mono" x="{cx+24}" y="58" font-size="10.5" fill="{t["muted"]}">last 12 months · includes private repos</text>')
+    months = st["months"]
+    base, top = 250, 96
+    mx = max(c for _, c in months) or 1
+    n = len(months)
+    slot = (cw - 48) / n
+    bw = slot - 14
+    for gi in range(3):
+        y = base - (base - top) * gi / 2
+        g.append(f'<line x1="{cx+24}" x2="{cx+cw-24}" y1="{y:.1f}" y2="{y:.1f}" stroke="{t["border_light"]}"/>')
+    imax = max(range(n), key=lambda i: months[i][1])
+    mn = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
+    for i, (k, c) in enumerate(months):
+        h = max(2, (base - top) * c / mx)
+        x = cx + 24 + i * slot + 7
+        r = min(4, bw / 2, h / 2)
+        d = (f"M{x:.1f},{base} V{base-h+r:.1f} Q{x:.1f},{base-h:.1f} {x+r:.1f},{base-h:.1f} "
+             f"H{x+bw-r:.1f} Q{x+bw:.1f},{base-h:.1f} {x+bw:.1f},{base-h+r:.1f} V{base} Z")
+        g.append(f'<path class="bar" style="animation-delay:{i*0.05:.2f}s" d="{d}" fill="{SERIES_1[mode]}"/>')
+        g.append(f'<text class="mono" x="{x+bw/2:.1f}" y="{base+20}" text-anchor="middle" font-size="10" '
+                 f'fill="{t["muted"]}">{mn[int(k[5:7])-1]}</text>')
+        if i in (imax, n - 1):
+            g.append(f'<text class="mono" x="{x+bw/2:.1f}" y="{base-h-8:.1f}" text-anchor="middle" font-size="10.5" '
+                     f'fill="{t["secondary"]}">{c:,}</text>')
+    g.append(f'<line x1="{cx+24}" x2="{cx+cw-24}" y1="{base+.5}" y2="{base+.5}" stroke="{t["border"]}"/>')
+    alt = (f"{st['total']:,} contributions in the last 12 months; longest streak {st['longest']} days; current streak "
+           f"{st['current']} days; busiest weekday {st['weekday']}. Per month: "
+           + ", ".join(f"{mn[int(k[5:7])-1]} {c}" for k, c in months))
+    return svg(W, H, alt, css, "".join(g))
+
+
+# ---------------------------------------------------------------- contact row
+def button(t, label, icon):
+    fs = 14
+    w = int(52 + len(label) * fs * 0.56)
+    H = 40
+    css = font_css(mono=False) + BASE_CSS
+    ic = {
+        "linkedin": (f'<rect x="14" y="11" width="18" height="18" rx="4" fill="{t["primary"]}"/>'
+                     '<text x="23" y="25" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" '
+                     'font-size="12" font-weight="700" fill="#ffffff">in</text>'),
+        "web": (f'<circle cx="23" cy="20" r="8.5" fill="none" stroke="{t["link"]}" stroke-width="1.5"/>'
+                f'<ellipse cx="23" cy="20" rx="3.6" ry="8.5" fill="none" stroke="{t["link"]}" stroke-width="1.2"/>'
+                f'<line x1="14.5" y1="20" x2="31.5" y2="20" stroke="{t["link"]}" stroke-width="1.2"/>'),
+    }[icon]
+    body = (f'<rect x=".5" y=".5" width="{w-1}" height="{H-1}" rx="8" fill="{t["card"]}" stroke="{t["border"]}"/>'
+            + ic + f'<text class="sans" x="42" y="25" font-size="{fs}" font-weight="560" fill="{t["text"]}">{label}</text>')
+    return svg(w, H, label, css, body)
+
+
+def open_to(t):
+    parts = [("BASED IN", "Germany"), ("OPEN TO", "tech partnerships · talent")]
+    fs = 12
+    adv = fs * MONO_ADV
+    x = 0
+    body = []
+    for k, (lab, val) in enumerate(parts):
+        w = int(28 + (len(lab) + len(val) + 2) * adv)
+        body.append(f'<rect x="{x+.5}" y=".5" width="{w-1}" height="31" rx="16" fill="{t["card"]}" stroke="{t["border"]}"/>')
+        body.append(f'<circle cx="{x+15}" cy="16" r="2.5" fill="{t["success"] if k else t["link"]}"/>')
+        body.append(f'<text class="mono" x="{x+25}" y="20" font-size="{fs}" fill="{t["muted"]}">{lab}'
+                    f'<tspan dx="{adv:.1f}" fill="{t["text"]}">{val}</tspan></text>')
+        x += w + 8
+    css = font_css(geist=False) + BASE_CSS
+    return svg(int(x - 8), 32, "Based in Germany. Open to tech partnerships and talent.", css, "".join(body))
+
+
+# ---------------------------------------------------------------- live data
+LAT, LON = 51.2277, 6.7735
+
+
+def http_json(url, data=None, headers=None):
+    import json
+    import urllib.request
+    req = urllib.request.Request(url, data=data, headers=headers or {"User-Agent": "profile-svg-builder"})
+    with urllib.request.urlopen(req, timeout=20) as r:
+        return json.loads(r.read().decode())
+
+
+def fetch_calendar(user, token):
+    import json
+    q = ('query($u:String!){user(login:$u){contributionsCollection{contributionCalendar{'
+         'weeks{contributionDays{date contributionCount}}}}}}')
+    res = http_json("https://api.github.com/graphql",
+                    data=json.dumps({"query": q, "variables": {"u": user}}).encode(),
+                    headers={"Authorization": f"bearer {token}", "User-Agent": "profile-svg-builder",
+                             "Content-Type": "application/json"})
+    weeks = res["data"]["user"]["contributionsCollection"]["contributionCalendar"]["weeks"]
+    return [(d["date"], d["contributionCount"]) for w in weeks for d in w["contributionDays"]]
+
+
+def wmo_to_weather(code):
+    if code in (0, 1):
+        return "clear"
+    if code == 2:
+        return "partly"
+    if code == 3:
+        return "cloudy"
+    if code in (45, 48):
+        return "fog"
+    if code in (71, 73, 75, 77, 85, 86):
+        return "snow"
+    if code in (95, 96, 99):
+        return "storm"
+    return "rain"  # drizzle, rain, showers, freezing rain
+
+
+def fetch_weather():
+    import datetime as dt
+    u = (f"https://api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}"
+         "&current=weather_code,temperature_2m&daily=sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=1")
+    w = http_json(u)
+    now = dt.datetime.fromisoformat(w["current"]["time"])
+    rise = dt.datetime.fromisoformat(w["daily"]["sunrise"][0])
+    sset = dt.datetime.fromisoformat(w["daily"]["sunset"][0])
+    band = dt.timedelta(minutes=45)
+    if abs(now - rise) <= band or abs(now - sset) <= band:
+        phase = "dusk"
+    elif rise < now < sset:
+        phase = "day"
+    else:
+        phase = "night"
+    return dict(phase=phase, weather=wmo_to_weather(w["current"]["weather_code"]),
+                temp=w["current"]["temperature_2m"])
+
+
 def main():
-    OUT.mkdir(exist_ok=True)
-    for name, fn in [("header", header), ("focus", focus), ("terminal", terminal),
-                     ("skyline", None)]:
+    import argparse
+    import os
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--live", action="store_true", help="fetch calendar + weather, write live SVGs")
+    ap.add_argument("--out", default=str(OUT))
+    ap.add_argument("--phase")
+    ap.add_argument("--weather")
+    args = ap.parse_args()
+    out = Path(args.out)
+    out.mkdir(parents=True, exist_ok=True)
+
+    def write(name, content):
+        p = out / name
+        p.write_text(content, encoding="utf-8")
+        print(f"{p}  {p.stat().st_size/1024:.0f} KB")
+
+    if args.live:
+        user = os.environ.get("GH_USER", "onetechgroupll")
+        st = calendar_stats(fetch_calendar(user, os.environ["GITHUB_TOKEN"]))
+        try:
+            wx = fetch_weather()
+        except Exception as e:  # weather is decoration: fall back, never fail the build
+            print("weather unavailable:", e)
+            wx = dict(phase="day", weather="clear", temp=None)
+        if args.phase:
+            wx["phase"] = args.phase
+        if args.weather:
+            wx["weather"] = args.weather
+        print("weather:", wx)
         for mode, t in THEMES.items():
-            p = OUT / f"{name}-{mode}.svg"
-            p.write_text(fn(t) if fn else skyline(t, mode), encoding="utf-8")
-            print(f"{p.relative_to(ROOT)}  {p.stat().st_size/1024:.0f} KB")
+            write(f"stats-{mode}.svg", stats(t, mode, st))
+            write(f"skyline-{mode}.svg", skyline(t, mode, **wx))
+        return
+
+    for name, fn in [("header", header), ("focus", focus), ("terminal", terminal)]:
+        for mode, t in THEMES.items():
+            write(f"{name}-{mode}.svg", fn(t))
     for mode, t in THEMES.items():
-        p = OUT / f"avatar-{mode}.svg"
-        p.write_text(skyline(t, mode, crop=AVATAR_CROP, label=False), encoding="utf-8")
-        print(f"{p.relative_to(ROOT)}")
+        write(f"skyline-{mode}.svg", skyline(t, mode))
+        write(f"avatar-{mode}.svg", skyline(t, mode, crop=AVATAR_CROP, label=False))
+        write(f"btn-linkedin-{mode}.svg", button(t, "LinkedIn", "linkedin"))
+        write(f"btn-web-{mode}.svg", button(t, "onetech.group", "web"))
+        write(f"open-to-{mode}.svg", open_to(t))
 
 
 if __name__ == "__main__":
