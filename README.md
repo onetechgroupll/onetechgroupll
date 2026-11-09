@@ -1,7 +1,7 @@
 <a href="https://onetech.group">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="./assets/header-dark.svg">
-    <img alt="Lucas Lingens, Founder and MD of One Tech Group. I build retail media rails, AdTech, mobile apps and fintech flows." src="./assets/header-light.svg" width="100%">
+    <img alt="Lucas Lingens, Founder and MD of One Tech Group. I build retail media rails, AdTech, MarTech, mobile apps and fintech flows." src="./assets/header-light.svg" width="100%">
   </picture>
 </a>
 

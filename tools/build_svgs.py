@@ -63,7 +63,7 @@ def svg(w, h, title, style, body):
 # ---------------------------------------------------------------- header
 def header(t):
     W, H = 1200, 340
-    words = ["retail media rails.", "AdTech.", "mobile apps.", "fintech flows."]
+    words = ["retail media rails.", "AdTech.", "MarTech.", "mobile apps.", "fintech flows."]
     n = len(words)
     slot = 3.2
     cycle = slot * n
