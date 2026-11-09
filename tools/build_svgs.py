@@ -637,6 +637,18 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
         g.append(bldg([(x, G), (x, top + 12), (x + w / 2, top), (x + w, top + 12), (x + w, G)],
                       fill=t["card"] if i % 2 else t["section"]))
         g.append(windows(x + 5, top + 18, 2, max(1, (G - top - 24) // 11), 11, 11, w=5, h=5, seed=i * 3))
+    # red-and-white F95 fan flag on the gable of an Altstadt house
+    fx, fy = 717, 242
+    red = "#dc2626" if mode == "light" else "#ef4444"
+    g.append(f'<line x1="{fx}" y1="{fy}" x2="{fx}" y2="{fy-34}" stroke="{st}" stroke-width="1.3"/>'
+             f'<circle cx="{fx}" cy="{fy-35}" r="1.4" fill="{st}"/>')
+    g.append(f'<g transform="translate({fx+.7},{fy-33})"><g>'
+             f'<path d="M0,0 H26 Q24,7 26,16 H0 Z" fill="{red}"/>'
+             f'<rect x="0" y="6.4" width="25" height="3.2" fill="#ffffff"/>'
+             f'<text class="mono" x="12.5" y="12.9" text-anchor="middle" font-size="8.5" font-weight="700" '
+             f'fill="#ffffff" stroke="{red}" stroke-width="2.2" paint-order="stroke">F95</text>'
+             f'<animateTransform attributeName="transform" type="skewY" dur="2.6s" repeatCount="indefinite" '
+             f'values="0;4;-2;0"/></g></g>')
     # Schlossturm
     g.append(bldg([(584, G), (584, 214), (606, 214), (606, G)], fill=t["section"]))
     g.append(f'<path d="M581,216 Q595,192 609,216 Z" fill="{t["primary_subtle"]}" stroke="{st}" stroke-width="1.5"/>')
