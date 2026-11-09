@@ -70,6 +70,8 @@
   <img alt="Contribution graph being eaten by a snake" src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/snake-light.svg" width="100%">
 </picture>
 
+### Born, still living and working in Düsseldorf
+
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/skyline-dark.svg">
   <img alt="Düsseldorf skyline: Rheinturm with its Lichtzeitpegel clock counting the seconds, the Stadttor with an LL rooftop sign, Neuer Zollhof, the Altstadt with St. Lambertus, the Rheinkniebrücke and boats on the Rhine. Time of day and weather follow Düsseldorf live." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/skyline-light.svg" width="100%">
