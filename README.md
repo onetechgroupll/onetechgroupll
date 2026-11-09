@@ -58,6 +58,20 @@
   </picture>
 </a>
 
+### Projects I recommend
+
+<p>
+<a href="https://github.com/garrytan/gstack"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-gstack-dark.svg"><img alt="garrytan/gstack: Opinionated skills that turn a coding agent into a full product team: plan, review, QA, ship." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-gstack-light.svg" width="49%"></picture></a>
+<a href="https://github.com/garrytan/gbrain"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-gbrain-dark.svg"><img alt="garrytan/gbrain: A persistent brain for agents: pages, hybrid search and memory that outlive every session." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-gbrain-light.svg" width="49%"></picture></a>
+<a href="https://github.com/herdrdev/herdr"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-herdr-dark.svg"><img alt="herdrdev/herdr: The runtime your coding agents live on: workspaces, sessions and panes in one place." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-herdr-light.svg" width="49%"></picture></a>
+<a href="https://github.com/earendil-works/pi"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-pi-dark.svg"><img alt="earendil-works/pi: A lean agent toolkit: unified LLM API, agent loop, terminal UI and a coding agent CLI." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-pi-light.svg" width="49%"></picture></a>
+<a href="https://github.com/anomalyco/opencode"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-opencode-dark.svg"><img alt="anomalyco/opencode: The open-source coding agent for the terminal, provider-agnostic and built to be hacked on." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-opencode-light.svg" width="49%"></picture></a>
+<a href="https://github.com/NousResearch/hermes-agent"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-hermes-agent-dark.svg"><img alt="NousResearch/hermes-agent: A self-improving agent that grows with you: skills, memory and tools that compound." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-hermes-agent-light.svg" width="49%"></picture></a>
+<a href="https://github.com/morluto/rea"><picture><source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-rea-dark.svg"><img alt="morluto/rea: Reverse engineering with agents, from app behavior down to native binaries." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/rec-rea-light.svg" width="49%"></picture></a>
+</p>
+
+<sub>Open-source tools I use and like. Stars update live.</sub>
+
 ### Contributions
 
 <picture>

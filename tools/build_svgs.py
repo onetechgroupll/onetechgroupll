@@ -369,6 +369,70 @@ def oss_card(t, p):
     return svg(W, H, alt, style, "".join(g))
 
 
+# ---------------------------------------------------------------- recommended projects
+# stars are a fallback snapshot; --live refreshes them from the GitHub API
+RECS = [
+    dict(repo="garrytan/gstack", tag="WORKFLOW", lang="TypeScript", stars=140932,
+         l1="Opinionated skills that turn a coding agent", l2="into a full product team: plan, review, QA, ship."),
+    dict(repo="garrytan/gbrain", tag="MEMORY", lang="TypeScript", stars=32049,
+         l1="A persistent brain for agents: pages, hybrid", l2="search and memory that outlive every session."),
+    dict(repo="herdrdev/herdr", tag="RUNTIME", lang="Rust", stars=49733,
+         l1="The runtime your coding agents live on:", l2="workspaces, sessions and panes in one place."),
+    dict(repo="earendil-works/pi", tag="TOOLKIT", lang="TypeScript", stars=121056,
+         l1="A lean agent toolkit: unified LLM API, agent", l2="loop, terminal UI and a coding agent CLI."),
+    dict(repo="anomalyco/opencode", tag="CODING AGENT", lang="TypeScript", stars=225635,
+         l1="The open-source coding agent for the terminal,", l2="provider-agnostic and built to be hacked on."),
+    dict(repo="NousResearch/hermes-agent", tag="AGENT", lang="Python", stars=262017,
+         l1="A self-improving agent that grows with you:", l2="skills, memory and tools that compound."),
+    dict(repo="morluto/rea", tag="REVERSE ENG", lang="TypeScript", stars=446456,
+         l1="Reverse engineering with agents, from app", l2="behavior down to native binaries."),
+]
+LANG_COLOR = {"TypeScript": "#3178c6", "Python": "#3572a5", "Rust": "#dea584"}
+
+
+def fmt_stars(n):
+    return f"{n/1000:.1f}k" if n >= 1000 else str(n)
+
+
+def rec_card(t, p):
+    W, H = 600, 176
+    owner, name = p["repo"].split("/")
+    css = font_css() + BASE_CSS + """
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(4px)}}
+.arrow{animation:nudge 1.8s ease-in-out infinite}
+"""
+    g = [f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>',
+         f'<rect x="24" y="24" width="44" height="44" rx="8" fill="{t["primary_light"]}"/>',
+         f'<text class="mono" x="46" y="53" text-anchor="middle" font-size="20" font-weight="700" fill="{t["link"]}">{esc(name[0].upper())}</text>',
+         f'<text class="sans" x="84" y="44" font-size="22" font-weight="620" letter-spacing="-.4" fill="{t["text"]}">{esc(name)}</text>',
+         f'<text class="mono" x="84" y="64" font-size="12" fill="{t["muted"]}">{esc(owner)}</text>']
+    tw = len(p["tag"]) * 10.5 * MONO_ADV + 18
+    g.append(f'<rect x="{W-24-tw:.0f}" y="26" width="{tw:.0f}" height="22" rx="4" fill="{t["primary_light"]}"/>'
+             f'<text class="mono" x="{W-24-tw+9:.0f}" y="41" font-size="10.5" letter-spacing=".4" fill="{t["link"]}">{esc(p["tag"])}</text>')
+    g.append(f'<text class="sans" x="24" y="102" font-size="16" fill="{t["secondary"]}">{esc(p["l1"])}</text>')
+    g.append(f'<text class="sans" x="24" y="124" font-size="16" fill="{t["secondary"]}">{esc(p["l2"])}</text>')
+    g.append(f'<path d="M24,140 H{W-24}" stroke="{t["border_light"]}"/>')
+    g.append(f'<circle cx="30" cy="158" r="5" fill="{LANG_COLOR.get(p["lang"], t["muted"])}"/>'
+             f'<text class="mono" x="42" y="162" font-size="12" fill="{t["muted"]}">{esc(p["lang"])}</text>')
+    sx = 42 + len(p["lang"]) * 12 * MONO_ADV + 22
+    g.append(f'<path transform="translate({sx:.0f},151) scale(.75)" d="M8,0 L10.4,5 L16,5.7 L11.9,9.5 L13,15 L8,12.3 L3,15 L4.1,9.5 L0,5.7 L5.6,5 Z" fill="{t["muted"]}"/>'
+             f'<text class="mono" x="{sx+18:.0f}" y="162" font-size="12" fill="{t["muted"]}">{fmt_stars(p["stars"])}</text>')
+    g.append(f'<text class="mono" x="{W-52}" y="162" text-anchor="end" font-size="12" fill="{t["link"]}">view on GitHub</text>'
+             f'<g class="arrow"><path d="M{W-44},158 h14 m-5,-5 l5,5 l-5,5" fill="none" stroke="{t["link"]}" stroke-width="1.6" '
+             f'stroke-linecap="round" stroke-linejoin="round"/></g>')
+    alt = f'Recommended: {p["repo"]} ({p["tag"].lower()}). {p["l1"]} {p["l2"]}'
+    return svg(W, H, esc(alt), css, "".join(g))
+
+
+def fetch_stars(token):
+    for p in RECS:
+        try:
+            p["stars"] = http_json(f"https://api.github.com/repos/{p['repo']}",
+                                   headers={"Authorization": f"bearer {token}", "User-Agent": "profile-svg-builder"})["stargazers_count"]
+        except Exception as e:  # keep the snapshot, never fail the build
+            print("stars unavailable:", p["repo"], e)
+
+
 # ---------------------------------------------------------------- terminal
 BOLD = ' font-weight="700"'
 
@@ -1279,7 +1343,10 @@ def main():
         from rheinturm import COLORS, load_state
         rt = load_state()
         print("weather:", wx)
+        fetch_stars(os.environ["GITHUB_TOKEN"])
         for mode, t in THEMES.items():
+            for p in RECS:
+                write(f"rec-{p['repo'].split('/')[1]}-{mode}.svg", rec_card(t, p))
             write(f"stats-{mode}.svg", stats(t, mode, st))
             write(f"gravity-{mode}.svg", gravity(t, mode, days))
             write(f"skyline-{mode}.svg", skyline(t, mode, **wx, pod=COLORS[rt["color"]][0 if mode == "light" else 1],
@@ -1299,6 +1366,8 @@ def main():
         from rheinturm import COLORS
         for name, (lf, df) in COLORS.items():
             write(f"rt-{name}-{mode}.svg", rt_chip(t, name, lf if mode == "light" else df))
+        for p in RECS:
+            write(f"rec-{p['repo'].split('/')[1]}-{mode}.svg", rec_card(t, p))
         for p in OSS:
             write(f"oss-{p['repo'].split('/')[1]}-{mode}.svg", oss_card(t, p))
 
