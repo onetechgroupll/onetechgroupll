@@ -8,7 +8,6 @@
 <p align="center">
   <a href="https://onetech.group"><img alt="onetech.group" src="https://img.shields.io/badge/onetech.group-1d48c0?style=flat-square&logo=googlechrome&logoColor=white"></a>
   <img alt="Based in Germany" src="https://img.shields.io/badge/based_in-Germany-5e5b56?style=flat-square">
-  <img alt="Building with AI agents" src="https://img.shields.io/badge/builds_with-Claude_%2B_Codex-16a34a?style=flat-square">
 </p>
 
 ### What I build
