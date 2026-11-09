@@ -342,8 +342,8 @@ def terminal(t):
     lines = [
         ("$", "whoami"),
         (">", "founder & md @ one tech group — retail media · adtech · mobile apps · fintech"),
-        ("$", "cat ./workflow"),
-        (">", "claude orchestrates · codex builds · humans decide · ship daily"),
+        ("$", "cat ./principles"),
+        (">", "surgical changes · root cause over shortcut · ship daily"),
         ("$", "ls ./building"),
         (">", "ad-exchange/   retail-media-os/   mobile-apps/   billing-rails/"),
         ("$", "echo $MOTTO"),

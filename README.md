@@ -21,7 +21,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/terminal-dark.svg">
-  <img alt="Terminal. whoami: founder and MD at One Tech Group. Workflow: Claude orchestrates, Codex builds, humans decide, ship daily. Motto: probe reality before you trust your model." src="./assets/terminal-light.svg" width="100%">
+  <img alt="Terminal. whoami: founder and MD at One Tech Group. Principles: surgical changes, root cause over shortcut, ship daily. Motto: probe reality before you trust your model." src="./assets/terminal-light.svg" width="100%">
 </picture>
 
 ### Stack
@@ -35,8 +35,6 @@
   <img alt="Swift" src="https://img.shields.io/badge/Swift-1e1d1b?style=flat-square&logo=swift&logoColor=F05138">
   <img alt="PostgreSQL" src="https://img.shields.io/badge/PostgreSQL-1e1d1b?style=flat-square&logo=postgresql&logoColor=4169E1">
   <img alt="Railway" src="https://img.shields.io/badge/Railway-1e1d1b?style=flat-square&logo=railway&logoColor=white">
-  <img alt="Claude Code" src="https://img.shields.io/badge/Claude_Code-1e1d1b?style=flat-square&logo=anthropic&logoColor=D97757">
-  <img alt="OpenAI Codex" src="https://img.shields.io/badge/Codex-1e1d1b?style=flat-square&logo=openai&logoColor=white">
 </p>
 
 ### Contributions
