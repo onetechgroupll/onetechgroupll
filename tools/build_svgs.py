@@ -141,22 +141,15 @@ def header(t):
 
     # left text block
     x0 = 64
-    g.append(f'<text class="mono in d1" x="{x0}" y="92" font-size="13" letter-spacing="2.2" fill="{t["link"]}">'
+    g.append(f'<text class="mono in d1" x="{x0}" y="118" font-size="13" letter-spacing="2.2" fill="{t["link"]}">'
              f'FOUNDER &amp; MD · ONE TECH GROUP</text>')
-    g.append(f'<text class="sans in d2" x="{x0-3}" y="160" font-size="66" font-weight="640" letter-spacing="-2.2" '
+    g.append(f'<text class="sans in d2" x="{x0-3}" y="186" font-size="66" font-weight="640" letter-spacing="-2.2" '
              f'fill="{t["text"]}">Lucas Lingens</text>')
-    g.append(f'<g class="in d3"><text class="sans" x="{x0}" y="212" font-size="26" fill="{t["secondary"]}">I build</text>')
+    g.append(f'<g class="in d3"><text class="sans" x="{x0}" y="238" font-size="26" fill="{t["secondary"]}">I build</text>')
     for i, w in enumerate(words):
-        g.append(f'<text class="mono w{i}" style="transform-box:fill-box" x="{x0+98}" y="212" font-size="25" '
+        g.append(f'<text class="mono w{i}" style="transform-box:fill-box" x="{x0+98}" y="238" font-size="25" '
                  f'font-weight="700" fill="{t["link"]}">{w}</text>')
     g.append('</g>')
-    # status pill
-    py = 262
-    g.append(f'<g class="in d4"><rect x="{x0}" y="{py-17}" width="318" height="32" rx="16" fill="{t["card"]}" stroke="{t["border"]}"/>')
-    g.append(f'<circle class="ping" cx="{x0+19}" cy="{py-1}" r="5" fill="{t["success"]}"/>')
-    g.append(f'<circle cx="{x0+19}" cy="{py-1}" r="2.5" fill="{t["success"]}"/>')
-    g.append(f'<text class="mono" x="{x0+34}" y="{py+3}" font-size="12" fill="{t["secondary"]}">shipping with Claude + Codex</text>')
-    g.append(f'<rect class="caret" x="{x0+296}" y="{py-8}" width="7" height="14" fill="{t["link"]}"/></g>')
     return svg(W, H, "Lucas Lingens, Founder and MD of One Tech Group", style, "".join(g))
 
 
