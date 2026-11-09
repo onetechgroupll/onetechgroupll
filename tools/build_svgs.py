@@ -559,7 +559,7 @@ LINE = {"light": "#bdb6ab", "dark": "#55514c"}
 
 
 def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None, season=None,
-            pod=None, lit_by=None):
+            pod=None, lit_by=None, life=True, extra=""):
     """Duesseldorf skyline as flat line illustration.
 
     crop=(x, y, w, h) renders a viewBox crop (used for the square avatar).
@@ -760,39 +760,40 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
         g.append(f'<path class="{cls}" d="M0,{y} H{W+48}" stroke="{t["primary"]}" stroke-width="1.2" '
                  f'stroke-dasharray="{10+i*4} {26+i*6}" stroke-dashoffset="{i*13}" opacity=".28"/>')
 
-    # boats
-    def sailboat(c):
-        return (f'<path d="M-14,0 H14 L9,7 H-9 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
-                f'<line x1="0" y1="0" x2="0" y2="-28" stroke="{st}" stroke-width="1.2"/>'
-                f'<path d="M1.5,-27 L16,-3 H1.5 Z" fill="{c}"/><path d="M-1.5,-22 L-11,-3 H-1.5 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1"/>')
-    g.append(f'<g>{sailboat(t["primary"])}<animateMotion dur="70s" begin="-20s" repeatCount="indefinite" '
-             f'path="M-40,{G+30} H1240"/></g>')
-    g.append(f'<g>{sailboat(t["accent"])}<animateMotion dur="95s" begin="-70s" repeatCount="indefinite" '
-             f'path="M-40,{G+56} H1240"/></g>')
-    ship = (f'<path d="M-46,0 H50 L42,10 H-40 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.3"/>'
-            f'<rect x="-34" y="-9" width="62" height="9" rx="2" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
-            f'<rect x="-22" y="-16" width="30" height="7" rx="2" fill="{t["section"]}" stroke="{st}" stroke-width="1.2"/>'
-            + "".join(f'<rect x="{-30 + k * 9}" y="-6" width="5" height="3" fill="{t["primary"]}" opacity=".7"/>' for k in range(7))
-            + f'<text class="mono" x="-38" y="7.5" font-size="6.5" font-weight="700" fill="{t["link"]}">LL</text>')
-    g.append(f'<g>{ship}<animateMotion dur="120s" begin="-35s" repeatCount="indefinite" path="M1260,{G+80} H-60"/></g>')
+    if life:  # boats and the crocodile
+        # boats
+        def sailboat(c):
+            return (f'<path d="M-14,0 H14 L9,7 H-9 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
+                    f'<line x1="0" y1="0" x2="0" y2="-28" stroke="{st}" stroke-width="1.2"/>'
+                    f'<path d="M1.5,-27 L16,-3 H1.5 Z" fill="{c}"/><path d="M-1.5,-22 L-11,-3 H-1.5 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1"/>')
+        g.append(f'<g>{sailboat(t["primary"])}<animateMotion dur="70s" begin="-20s" repeatCount="indefinite" '
+                 f'path="M-40,{G+30} H1240"/></g>')
+        g.append(f'<g>{sailboat(t["accent"])}<animateMotion dur="95s" begin="-70s" repeatCount="indefinite" '
+                 f'path="M-40,{G+56} H1240"/></g>')
+        ship = (f'<path d="M-46,0 H50 L42,10 H-40 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.3"/>'
+                f'<rect x="-34" y="-9" width="62" height="9" rx="2" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
+                f'<rect x="-22" y="-16" width="30" height="7" rx="2" fill="{t["section"]}" stroke="{st}" stroke-width="1.2"/>'
+                + "".join(f'<rect x="{-30 + k * 9}" y="-6" width="5" height="3" fill="{t["primary"]}" opacity=".7"/>' for k in range(7))
+                + f'<text class="mono" x="-38" y="7.5" font-size="6.5" font-weight="700" fill="{t["link"]}">LL</text>')
+        g.append(f'<g>{ship}<animateMotion dur="120s" begin="-35s" repeatCount="indefinite" path="M1260,{G+80} H-60"/></g>')
 
-    # a small green crocodile, mostly submerged, swimming downstream (head to the right)
-    cg, cd = t["success"], ("#15803d" if mode == "light" else "#166534")
-    croc = (
-        f'<path d="M-30,1 Q-40,-1 -50,2" stroke="{cg}" stroke-width="3" fill="none" stroke-linecap="round">'
-        f'<animate attributeName="d" dur="1.6s" repeatCount="indefinite" '
-        f'values="M-30,1 Q-40,-1 -50,2;M-30,1 Q-40,3 -50,0;M-30,1 Q-40,-1 -50,2"/></path>'
-        f'<path d="M-32,1 Q-24,-6 -6,-6 Q6,-6 12,-3 L28,-3 Q32,-2.5 32,0.5 L32,1 Z" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
-        + "".join(f'<path d="M{x},-5.6 l2,-2.6 l2,2.6 Z" fill="{cd}"/>' for x in (-22, -16, -10, -4, 2))
-        + f'<circle cx="15" cy="-5.5" r="3.2" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
-        f'<circle cx="15.4" cy="-6" r="1.8" fill="{t["card"]}"/><circle cx="16" cy="-6" r=".9" fill="#1f2937"/>'
-        f'<circle cx="29" cy="-3.2" r="1" fill="{cd}"/>'
-        f'<path d="M-36,4 H36" stroke="{t["primary"]}" stroke-width="1.2" stroke-dasharray="6 5" opacity=".45"/>'
-        f'<path d="M34,2 l6,-2 M34,3 l6,2" stroke="{t["primary"]}" stroke-width="1" opacity=".45"/>'
-    )
-    g.append(f'<g><g><g transform="scale(1.7)">{croc}</g><animateTransform attributeName="transform" type="translate" dur="2.2s" '
-             f'repeatCount="indefinite" values="0,0;0,1.5;0,0"/></g>'
-             f'<animateMotion dur="85s" begin="-50s" repeatCount="indefinite" path="M-60,{G+44} H1260"/></g>')
+        # a small green crocodile, mostly submerged, swimming downstream (head to the right)
+        cg, cd = t["success"], ("#15803d" if mode == "light" else "#166534")
+        croc = (
+            f'<path d="M-30,1 Q-40,-1 -50,2" stroke="{cg}" stroke-width="3" fill="none" stroke-linecap="round">'
+            f'<animate attributeName="d" dur="1.6s" repeatCount="indefinite" '
+            f'values="M-30,1 Q-40,-1 -50,2;M-30,1 Q-40,3 -50,0;M-30,1 Q-40,-1 -50,2"/></path>'
+            f'<path d="M-32,1 Q-24,-6 -6,-6 Q6,-6 12,-3 L28,-3 Q32,-2.5 32,0.5 L32,1 Z" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
+            + "".join(f'<path d="M{x},-5.6 l2,-2.6 l2,2.6 Z" fill="{cd}"/>' for x in (-22, -16, -10, -4, 2))
+            + f'<circle cx="15" cy="-5.5" r="3.2" fill="{cg}" stroke="{cd}" stroke-width="1"/>'
+            f'<circle cx="15.4" cy="-6" r="1.8" fill="{t["card"]}"/><circle cx="16" cy="-6" r=".9" fill="#1f2937"/>'
+            f'<circle cx="29" cy="-3.2" r="1" fill="{cd}"/>'
+            f'<path d="M-36,4 H36" stroke="{t["primary"]}" stroke-width="1.2" stroke-dasharray="6 5" opacity=".45"/>'
+            f'<path d="M34,2 l6,-2 M34,3 l6,2" stroke="{t["primary"]}" stroke-width="1" opacity=".45"/>'
+        )
+        g.append(f'<g><g><g transform="scale(1.7)">{croc}</g><animateTransform attributeName="transform" type="translate" dur="2.2s" '
+                 f'repeatCount="indefinite" values="0,0;0,1.5;0,0"/></g>'
+                 f'<animateMotion dur="85s" begin="-50s" repeatCount="indefinite" path="M-60,{G+44} H1260"/></g>')
 
     if night or dusk:
         g.append(f'<rect width="{W}" height="{H}" fill="{NIGHT[mode]}" opacity="{(0.5 if mode == "light" else 0.38) if night else 0.12}"/>')
@@ -811,6 +812,7 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
             g.append(f'<text class="mono" x="32" y="80" font-size="10.5" font-weight="700" letter-spacing="1" '
                      f'fill="{"#f87171" if season in ("hoppeditz", "karneval") and (night or mode == "dark") else "#dc2626" if season in ("hoppeditz", "karneval") else lab}">{SEASON_LABEL[season]}</text>')
 
+    g.append(extra)
     g.append('</g>')
     if crop is None:
         g.append(f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="none" stroke="{t["border"]}"/>')
@@ -820,6 +822,72 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
         out = out.replace(f'width="{W}" height="{H}" viewBox="0 0 {W} {H}"',
                           f'width="{crop[2]}" height="{crop[3]}" viewBox="{crop[0]} {crop[1]} {crop[2]} {crop[3]}"', 1)
     return out
+
+
+def croc_with_easy(t, mode):
+    """Avatar foreground: a snapping crocodile in the Rhine with Easy (black-and-tan dog) riding on its back."""
+    st = LINE[mode]
+    cg, cd = "#22a356", ("#15803d" if mode == "light" else "#166534")
+    fur, tan, tan2 = ("#1c1a18", "#c47a3c", "#dba06a") if mode == "light" else ("#121110", "#c47a3c", "#dba06a")
+    dst = "#0d0c0b" if mode == "light" else "#6b665f"  # dog outline: dark on light, lifted on dark
+    mouth = "#e98a8a" if mode == "light" else "#b85c5c"
+    WL = 356
+    o = []
+    # --- crocodile (faces right, jaws open)
+    o.append(f'<path d="M340,346 Q300,340 262,352 L262,360 Q300,352 340,360 Z" fill="{cg}" stroke="{cd}" stroke-width="2"/>')  # tail
+    o.append(f'<path d="M330,362 Q328,338 360,330 Q420,316 480,318 Q520,318 548,322 L566,346 L566,364 Z" fill="{cg}" stroke="{cd}" stroke-width="2"/>')
+    for x in range(356, 536, 18):
+        y = 331 - 12 * (1 - abs((x - 446) / 100) ** 2)
+        o.append(f'<path d="M{x},{y+3:.0f} l6,-9 l6,9 Z" fill="{cd}"/>')
+    # mouth interior, then teeth, then jaws
+    o.append(f'<path d="M560,342 L626,296 L636,350 L562,352 Z" fill="{mouth}"/>')
+    up = [(560, 342), (628, 294)]
+    for k in range(1, 7):
+        f = k / 7
+        x, y = up[0][0] + (up[1][0] - up[0][0]) * f, up[0][1] + (up[1][1] - up[0][1]) * f
+        o.append(f'<path d="M{x-4:.1f},{y+2.8:.1f} L{x+4:.1f},{y-2.8:.1f} L{x+2:.1f},{y+7:.1f} Z" fill="#ffffff" stroke="{cd}" stroke-width=".6"/>')
+    for k in range(1, 6):
+        x = 566 + k * 11
+        o.append(f'<path d="M{x-4},348 L{x+4},348 L{x},340 Z" fill="#ffffff" stroke="{cd}" stroke-width=".6"/>')
+    o.append(f'<g><path d="M540,320 Q560,312 590,302 L626,286 Q640,282 638,294 L630,298 L560,344 Z" fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>'
+             f'<circle cx="630" cy="288" r="2" fill="{cd}"/>'
+             f'<animateTransform attributeName="transform" type="rotate" dur="3s" repeatCount="indefinite" '
+             f'values="0 560 344;0 560 344;14 560 344;0 560 344" keyTimes="0;.6;.75;1"/></g>')
+    o.append(f'<path d="M558,350 L636,348 Q644,352 636,358 L560,364 Z" fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>')
+    o.append(f'<circle cx="548" cy="314" r="11" fill="{cg}" stroke="{cd}" stroke-width="2"/>'
+             f'<circle cx="550" cy="312" r="6.5" fill="#fff8e1"/><rect x="549" y="306.5" width="3" height="11" rx="1.5" fill="#1f2937"/>'
+             f'<circle cx="548" cy="309.5" r="1.3" fill="#ffffff"/>')
+    # water in front of the submerged half (unscaled, full width)
+    TF = 'transform="translate(438,330) scale(.78) translate(-452,-356)"'
+    TD = 'transform="translate(438,330) scale(.9) translate(-452,-356)"'
+    croc_part, o = "".join(o), []
+    WL = 330
+    o.append(f'<rect x="262" y="{WL}" width="380" height="40" fill="{t["primary_light"]}" opacity=".88"/>'
+             f'<path d="M262,{WL} H642" stroke="{t["primary"]}" stroke-width="1.6" stroke-dasharray="14 10" opacity=".45"/>'
+             f'<path d="M548,{WL+8} q10,-6 20,0 t20,0 t20,0 M300,{WL+10} q10,-5 20,0 t20,0" fill="none" stroke="{t["primary"]}" stroke-width="1.4" opacity=".45"/>')
+    water_part, o = "".join(o), []
+    # --- Easy, standing on the back (body to the left, face to the viewer)
+    feet = 322
+    o.append(f'<path d="M378,288 Q356,276 360,250 Q372,262 368,244 Q382,262 384,276" fill="{fur}" stroke="{dst}" stroke-width="1.6" stroke-linejoin="round"/>')  # plume tail
+    for x, c in ((384, fur), (398, fur), (430, fur), (444, fur)):
+        o.append(f'<rect x="{x}" y="296" width="8" height="{feet-296}" rx="3.5" fill="{tan}" stroke="{dst}" stroke-width="1.4"/>'
+                 f'<ellipse cx="{x+4}" cy="{feet-1}" rx="5.5" ry="3" fill="{tan2}" stroke="{dst}" stroke-width="1.2"/>')
+    o.append(f'<path d="M374,290 Q372,270 398,268 L438,266 Q456,268 456,288 Q452,304 430,304 L392,304 Q376,302 374,290 Z" '
+             f'fill="{fur}" stroke="{dst}" stroke-width="1.6"/>')
+    # chest fringe
+    o.append(f'<path d="M436,272 Q446,300 438,314 Q446,306 450,316 Q454,306 460,314 Q456,296 462,276 Z" fill="{tan}" stroke="{dst}" stroke-width="1.2" stroke-linejoin="round"/>')
+    # ears behind the head
+    o.append(f'<path d="M434,246 Q420,250 422,272 Q424,292 434,290 Q440,280 438,262 Z" fill="{fur}" stroke="{dst}" stroke-width="1.5" stroke-linejoin="round"/>'
+             f'<path d="M470,246 Q484,250 482,272 Q480,292 470,290 Q464,280 466,262 Z" fill="{fur}" stroke="{dst}" stroke-width="1.5" stroke-linejoin="round"/>')
+    # head
+    o.append(f'<path d="M436,258 Q436,236 452,236 Q468,236 468,258 Q468,276 452,280 Q436,276 436,258 Z" fill="{fur}" stroke="{dst}" stroke-width="1.6"/>')
+    o.append(f'<ellipse cx="452" cy="268" rx="9" ry="8" fill="{tan}"/>'
+             f'<circle cx="444.5" cy="250" r="2.4" fill="{tan}"/><circle cx="459.5" cy="250" r="2.4" fill="{tan}"/>'
+             f'<circle cx="445" cy="256" r="3.2" fill="#5b3a1e"/><circle cx="459" cy="256" r="3.2" fill="#5b3a1e"/>'
+             f'<circle cx="446" cy="255" r="1" fill="#ffffff"/><circle cx="460" cy="255" r="1" fill="#ffffff"/>'
+             f'<ellipse cx="452" cy="265" rx="4.2" ry="3.2" fill="#0d0c0b"/>'
+             f'<path d="M452,268 V272 M448,273 Q452,276 456,273" fill="none" stroke="#0d0c0b" stroke-width="1.2" stroke-linecap="round"/>')
+    return f'<g {TF}>{croc_part}</g>{water_part}<g {TD}>{"".join(o)}</g>' 
 
 
 NIGHT = {"light": "#16203a", "dark": "#05070d"}
@@ -1358,7 +1426,7 @@ def main():
             write(f"{name}-{mode}.svg", fn(t))
     for mode, t in THEMES.items():
         write(f"skyline-{mode}.svg", skyline(t, mode))
-        write(f"avatar-{mode}.svg", skyline(t, mode, crop=AVATAR_CROP, label=False))
+        write(f"avatar-{mode}.svg", skyline(t, mode, crop=AVATAR_CROP, label=False, life=False, extra=croc_with_easy(t, mode)))
         write(f"btn-linkedin-{mode}.svg", button(t, "LinkedIn", "linkedin"))
         write(f"btn-web-{mode}.svg", button(t, "onetech.group", "web"))
         write(f"open-to-{mode}.svg", open_to(t))
