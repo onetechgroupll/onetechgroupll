@@ -63,7 +63,7 @@ def svg(w, h, title, style, body):
 # ---------------------------------------------------------------- header
 def header(t):
     W, H = 1200, 340
-    words = ["retail media rails.", "ad exchanges.", "mobile apps.", "fintech flows."]
+    words = ["retail media rails.", "AdTech.", "mobile apps.", "fintech flows."]
     n = len(words)
     slot = 3.2
     cycle = slot * n
@@ -130,7 +130,7 @@ def header(t):
     g.append(f'<circle class="ring ring2" cx="{cx}" cy="{cy}" r="34" fill="none" stroke="{t["primary"]}" stroke-width="1.5"/>')
     g.append(f'<circle cx="{cx}" cy="{cy}" r="34" fill="{t["primary"]}"/>')
     g.append(f'<text x="{cx}" y="{cy+6}" text-anchor="middle" class="mono" font-weight="700" font-size="16" fill="#ffffff">OTG</text>')
-    g.append(f'<text x="{cx}" y="{cy+58}" text-anchor="middle" class="mono" font-size="10" letter-spacing="1.5" fill="{t["muted"]}">EXCHANGE</text>')
+    g.append(f'<text x="{cx}" y="{cy+58}" text-anchor="middle" class="mono" font-size="10" letter-spacing="1.5" fill="{t["muted"]}">ADTECH</text>')
     # live bid ticker under the exchange
     bids = ["bid 2.41 EUR", "bid 3.08 EUR", "bid 1.97 EUR", "bid 2.76 EUR"]
     tick = []
@@ -345,7 +345,7 @@ def terminal(t):
         ("$", "cat ./principles"),
         (">", "surgical changes · root cause over shortcut · ship daily"),
         ("$", "ls ./building"),
-        (">", "ad-exchange/   retail-media-os/   mobile-apps/   billing-rails/"),
+        (">", "adtech/   retail-media-os/   mobile-apps/   billing-rails/"),
         ("$", "echo $MOTTO"),
         (">", "probe reality before you trust your model."),
     ]
