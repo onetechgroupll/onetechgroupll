@@ -370,68 +370,118 @@ def oss_card(t, p):
 
 
 # ---------------------------------------------------------------- terminal
+BOLD = ' font-weight="700"'
+
+
 def terminal(t):
+    """Typed terminal session: whoami, lucas --help, top (live bars), principles."""
     W = 1200
     fs = 15
     adv = fs * MONO_ADV
-    lh = 26
-    lines = [
-        ("$", "whoami"),
-        (">", "founder & md @ one tech group — retail media · adtech · mobile apps · fintech"),
-        ("$", "cat ./principles"),
-        (">", "surgical changes · root cause over shortcut · ship daily"),
-        ("$", "ls ./building"),
-        (">", "adtech/   retail-media-os/   mobile-apps/   billing-rails/"),
-        ("$", "echo $MOTTO"),
-        (">", "probe reality before you trust your model."),
-    ]
-    H = 70 + lh * len(lines) + 36
-    css = [font_css(geist=False, mono_bold=True), BASE_CSS]
-    t0 = 0.4
+    lh = 24
+    X = 32
+    TX = X + 2 * adv
+    txt, sec, mut, link, ok = t["text"], t["secondary"], t["muted"], t["link"], t["success"]
+    # rows: (kind, segments | text, extra)  kind: cmd | out | gap | top
+    flags = [("--business", "finance, controlling, planning"),
+             ("--product ", "from problem to shipped product"),
+             ("--build   ", "writes and ships own software"),
+             ("--lead    ", "leads teams and developers"),
+             ("--deals   ", "investments, holdings, M&A")]
+    procs = [("101", "deals.invest", [.62, .78, .55, .7, .62]),
+             ("102", "product.ship", [.84, .66, .9, .74, .84]),
+             ("103", "team.lead", [.58, .72, .64, .8, .58]),
+             ("104", "cashflow.plan", [.46, .6, .52, .44, .46]),
+             ("105", "code.review", [.7, .52, .76, .6, .7])]
+    rows = [("cmd", "whoami"),
+            ("out", [("founder & md @ one tech group", sec), (" · building since 2015", mut)]),
+            ("gap",),
+            ("cmd", "lucas --help"),
+            ("out", [("usage: lucas ", sec), ("[--business] [--product] [--build] [--lead] [--deals]", mut)])]
+    rows += [("out", [("  " + f, link, True), ("  " + d, sec)]) for f, d in flags]
+    rows += [("gap",), ("cmd", "top -o impact"),
+             ("out", [("  PID  PROCESS          STATE   LOAD", mut)])]
+    rows += [("top", p) for p in procs]
+    rows += [("gap",), ("cmd", "cat ./principles"),
+             ("out", [("01  ", mut), ("probe reality before you trust your model", link, True)]),
+             ("out", [("02  ", mut), ("read the source of truth, don't reconstruct", sec)]),
+             ("out", [("03  ", mut), ("root cause over shortcut", sec)]),
+             ("out", [("04  ", mut), ("done = works in production", sec)]),
+             ("gap",)]
+    y = 76
+    layout = []
+    for r in rows:
+        if r[0] == "gap":
+            y += 10
+            continue
+        layout.append((r, y))
+        y += lh
+    H = y + lh + 18
+    css = [font_css(geist=False, mono_bold=True), BASE_CSS,
+           "@keyframes ping{0%,100%{opacity:1}50%{opacity:.3}}.run{animation:ping 1.4s ease-in-out infinite}"]
     g = [f'<clipPath id="win"><rect x="0" y="0" width="{W}" height="{H}" rx="12"/></clipPath>',
          f'<g clip-path="url(#win)"><rect width="{W}" height="{H}" fill="{t["card"]}"/>'
          f'<rect width="{W}" height="40" fill="{t["section"]}"/></g>',
          f'<path d="M0,40.5 H{W}" stroke="{t["border"]}"/>',
          f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="none" stroke="{t["border"]}"/>']
-    for k, c in enumerate([t["idle"], t["idle"], t["idle"]]):
-        g.append(f'<circle cx="{24+k*18}" cy="20.5" r="5.5" fill="{c}"/>')
-    g.append(f'<text class="mono" x="{W/2}" y="25" text-anchor="middle" font-size="12" fill="{t["muted"]}">lucas@otg — ~/</text>')
-    g.append('<defs>')
-    clips = []
-    for i, (p, txt) in enumerate(lines):
-        y = 76 + i * lh
-        x = 32 + 2 * adv
-        width = len(txt) * adv + 16
-        steps = len(txt)
-        dur = 0.045 * steps if p == "$" else 0.35
-        timing = f"steps({steps},end)" if p == "$" else "ease-out"
-        css.append(f"@keyframes p{i}{{to{{opacity:1}}}}.p{i}{{opacity:0;animation:p{i} .01s {t0:.2f}s forwards}}")
-        if p == "$":
-            vals = ";".join(f"{min(k * adv, width):.1f}" for k in range(steps + 1)) + f";{width:.1f}"
+    for k in range(3):
+        g.append(f'<circle cx="{24+k*18}" cy="20.5" r="5.5" fill="{t["idle"]}"/>')
+    g.append(f'<text class="mono" x="{W/2}" y="25" text-anchor="middle" font-size="12" fill="{mut}">lucas@otg — ~/ — zsh</text>')
+    defs, body = ['<defs>'], []
+    t0 = 0.4
+    for i, (r, y) in enumerate(layout):
+        kind = r[0]
+        if kind == "cmd":
+            text = r[1]
+            width = len(text) * adv + 16
+            dur = 0.05 * len(text)
+            vals = ";".join(f"{min(k * adv, width):.1f}" for k in range(len(text) + 1)) + f";{width:.1f}"
             anim = (f'<animate attributeName="width" values="{vals}" begin="{t0:.2f}s" dur="{dur:.2f}s" '
                     f'calcMode="discrete" fill="freeze"/>')
+            css.append(f"@keyframes p{i}{{to{{opacity:1}}}}.p{i}{{opacity:0;animation:p{i} .01s {t0:.2f}s forwards}}")
+            body.append(f'<text class="mono pfx p{i}" x="{X}" y="{y}" font-size="{fs}" fill="{ok}">$</text>')
+            body.append(f'<text class="mono" clip-path="url(#cl{i})" x="{TX}" y="{y}" font-size="{fs}" font-weight="700" '
+                        f'fill="{txt}" xml:space="preserve">{esc(text)}</text>')
+            t0 += dur + 0.3
         else:
+            width = W - TX - 24
+            dur = 0.22
             anim = (f'<animate attributeName="width" values="0;{width:.1f}" begin="{t0:.2f}s" dur="{dur:.2f}s" '
                     f'calcMode="spline" keySplines=".2 .7 .3 1" keyTimes="0;1" fill="freeze"/>')
-        clips.append(f'<clipPath id="cl{i}"><rect x="{x}" y="{y-fs-2}" width="0" height="{lh}">{anim}</rect></clipPath>')
-        t0 += dur + (0.25 if p == "$" else 0.55)
-    g += clips
-    g.append('</defs>')
-    for i, (p, txt) in enumerate(lines):
-        y = 76 + i * lh
-        pc = t["success"] if p == "$" else t["muted"]
-        tc = t["text"] if p == "$" else (t["link"] if i == len(lines) - 1 else t["secondary"])
-        fw = ' font-weight="700"' if p == "$" else ""
-        g.append(f'<text class="mono pfx p{i}" x="32" y="{y}" font-size="{fs}" fill="{pc}">{p}</text>')
-        g.append(f'<text class="mono" clip-path="url(#cl{i})" x="{32+2*adv}" y="{y}" font-size="{fs}"{fw} '
-                 f'fill="{tc}" xml:space="preserve">{esc(txt)}</text>')
-    y = 76 + len(lines) * lh
+            if kind == "out":
+                spans = "".join(f'<tspan fill="{c[1]}"{BOLD if len(c) > 2 else ""}>{esc(c[0])}</tspan>'
+                                for c in r[1])
+                body.append(f'<text class="mono" clip-path="url(#cl{i})" x="{TX}" y="{y}" font-size="{fs}" '
+                            f'xml:space="preserve">{spans}</text>')
+            else:  # top row with a live load bar
+                pid, name, loads = r[1]
+                bx, bw = TX + 32 * adv, 260  # LOAD column = char 32 of the header
+                vals = ";".join(f"{v * bw:.1f}" for v in loads)
+                dur_bar = 4 + int(pid) % 3
+                body.append(f'<g clip-path="url(#cl{i})">'
+                            f'<text class="mono" x="{TX}" y="{y}" font-size="{fs}" xml:space="preserve">'
+                            f'<tspan fill="{mut}">  {pid}  </tspan><tspan fill="{txt}">{name:<17}</tspan></text>'
+                            f'<circle class="run" style="animation-delay:{int(pid) % 5 * .2:.1f}s" cx="{TX + 24.5 * adv:.1f}" cy="{y-5}" r="3.2" fill="{ok}"/>'
+                            f'<text class="mono" x="{TX + 25.6 * adv:.1f}" y="{y}" font-size="{fs}" fill="{sec}">R</text>'
+                            f'<rect x="{bx:.1f}" y="{y-11}" width="{bw}" height="10" rx="3" fill="{t["section"]}"/>'
+                            f'<rect x="{bx:.1f}" y="{y-11}" width="{loads[0]*bw:.1f}" height="10" rx="3" fill="{t["primary"]}">'
+                            f'<animate attributeName="width" values="{vals}" dur="{dur_bar}s" repeatCount="indefinite" '
+                            f'calcMode="spline" keySplines=".4 0 .2 1;.4 0 .2 1;.4 0 .2 1;.4 0 .2 1"/></rect></g>')
+            t0 += dur + 0.06
+        defs.append(f'<clipPath id="cl{i}"><rect x="{TX - 2 if kind == "cmd" else TX - 4}" y="{y-fs-2}" width="0" height="{lh}">{anim}</rect></clipPath>')
+    defs.append('</defs>')
+    y = layout[-1][1] + lh + 10
     css.append(f"@keyframes bl{{0%,49%{{opacity:1}}50%,100%{{opacity:0}}}}"
                f"@keyframes on{{to{{visibility:visible}}}}"
                f".cur{{visibility:hidden;animation:on .01s {t0:.2f}s forwards, bl 1s steps(1) {t0:.2f}s infinite}}")
-    g.append(f'<text class="mono" x="32" y="{y}" font-size="{fs}" fill="{t["success"]}">$</text>')
-    g.append(f'<rect class="cur" x="{32+2*adv}" y="{y-fs+2}" width="{adv:.1f}" height="{fs+2}" fill="{t["link"]}"/>')
-    return svg(W, H, "Terminal: whoami, workflow, what I am building, motto", "".join(css), "".join(g))
+    body.append(f'<text class="mono" x="{X}" y="{y}" font-size="{fs}" fill="{ok}">$</text>')
+    body.append(f'<rect class="cur" x="{TX}" y="{y-fs+2}" width="{adv:.1f}" height="{fs+2}" fill="{link}"/>')
+    title = ("Terminal. whoami: founder and MD at One Tech Group, building since 2015. "
+             "Roles: business (finance, controlling, planning), product, build (writes and ships own software), "
+             "lead (teams and developers), deals (investments, holdings, M&amp;A). "
+             "Principles: probe reality before you trust your model; read the source of truth; "
+             "root cause over shortcut; done means works in production.")
+    return svg(W, H, title, "".join(css), "".join(g + defs + body))
 
 
 def esc(s):
