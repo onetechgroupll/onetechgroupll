@@ -763,7 +763,7 @@ animation:grow .9s cubic-bezier(.2,.7,.3,1) both}}
              (st["weekday"], "", "busiest weekday")]
     tw, th, gap = 280, 136, 20
     for i, (num, unit, lab) in enumerate(tiles):
-        x, y = (i % 2) * (tw + gap) + .5, (i // 2) * (th + gap + 8) + .5
+        x, y = (i % 2) * (tw + gap) + .5, (i // 2) * (th + 26) + .5  # 2*136+26 = 298 < H
         g.append(f'<rect x="{x}" y="{y}" width="{tw}" height="{th}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>')
         g.append(f'<text class="mono" x="{x+22}" y="{y+34}" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">{lab.upper()}</text>')
         fs = 42 if len(num) < 8 else 34
