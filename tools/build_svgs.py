@@ -1115,11 +1115,13 @@ def fetch_weather():
     u = (f"https://api.open-meteo.com/v1/forecast?latitude={LAT}&longitude={LON}"
          "&current=weather_code,temperature_2m&daily=sunrise,sunset&timezone=Europe%2FBerlin&forecast_days=1")
     w = http_json(u)
-    now = dt.datetime.fromisoformat(w["current"]["time"])
+    from zoneinfo import ZoneInfo
+    now = dt.datetime.now(ZoneInfo("Europe/Berlin")).replace(tzinfo=None)  # real time, not the API's 15-min slot
     rise = dt.datetime.fromisoformat(w["daily"]["sunrise"][0])
     sset = dt.datetime.fromisoformat(w["daily"]["sunset"][0])
-    band = dt.timedelta(minutes=45)
-    if abs(now - rise) <= band or abs(now - sset) <= band:
+    m = dt.timedelta(minutes=1)
+    # dusk ~ civil twilight: it is dark ~30 min after sunset (and light ~30 min before sunrise)
+    if rise - 30 * m <= now <= rise + 30 * m or sset - 30 * m <= now <= sset + 30 * m:
         phase = "dusk"
     elif rise < now < sset:
         phase = "day"
