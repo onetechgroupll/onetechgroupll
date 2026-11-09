@@ -1,0 +1,61 @@
+name: light up the Rheinturm
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: write
+  actions: write
+
+concurrency:
+  group: rheinturm
+  cancel-in-progress: false
+
+jobs:
+  light:
+    if: startsWith(github.event.issue.title, 'rheinturm:') || startsWith(github.event.issue.title, 'Rheinturm:')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+
+      # Untrusted input is passed via env and validated in Python against a fixed color list.
+      - id: rt
+        env:
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_USER: ${{ github.event.issue.user.login }}
+        run: python3 tools/rheinturm.py >> "$GITHUB_OUTPUT"
+
+      - name: Commit new color
+        if: steps.rt.outputs.result == 'ok'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add state/rheinturm.json
+          git commit -m "Rheinturm lit ${{ steps.rt.outputs.color }} via #${{ github.event.issue.number }}"
+          git pull --rebase
+          git push
+          gh workflow run profile.yml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Thank and close
+        if: steps.rt.outputs.result == 'ok'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+          COLOR: ${{ steps.rt.outputs.color }}
+        run: |
+          gh issue comment "$NUM" --body "Danke! The Rheinturm now glows **$COLOR** on the profile. It shows up within a few minutes."
+          gh issue close "$NUM"
+
+      - name: Close invalid requests
+        if: steps.rt.outputs.result != 'ok'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NUM: ${{ github.event.issue.number }}
+        run: |
+          gh issue comment "$NUM" --body "Unknown color. Pick one of the links on the profile: blue, red, green, purple, orange, pink or gold."
+          gh issue close "$NUM" --reason "not planned"

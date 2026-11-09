@@ -494,7 +494,8 @@ CLOCK_SEP = {"light": "#dc2626", "dark": "#f87171"}  # Lichtzeitpegel separators
 LINE = {"light": "#bdb6ab", "dark": "#55514c"}
 
 
-def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None, season=None):
+def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None, season=None,
+            pod=None, lit_by=None):
     """Duesseldorf skyline as flat line illustration.
 
     crop=(x, y, w, h) renders a viewBox crop (used for the square avatar).
@@ -595,7 +596,13 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
     # 5. Rheinturm with Lichtzeitpegel
     rx = 490
     g.append(bldg([(rx - 13, G), (rx + 13, G), (rx + 6, 92), (rx - 6, 92)]))
-    g.append(f'<rect x="{rx-24}" y="78" width="48" height="14" rx="6" fill="{t["primary"]}"/>')
+    pod_fill = pod or t["primary"]
+    if night or dusk:
+        L.append(f'<rect class="glow" x="{rx-30}" y="73" width="60" height="24" rx="10" fill="{pod_fill}" opacity=".35"/>')
+    g.append(f'<rect x="{rx-24}" y="78" width="48" height="14" rx="6" fill="{pod_fill}"/>')
+    if lit_by and label:
+        g.append(f'<path d="M{rx+26},85 H{rx+40}" stroke="{t["muted"]}" stroke-width=".8"/>'
+                 f'<text class="mono" x="{rx+44}" y="88.5" font-size="9.5" fill="{t["muted"]}">lit by @{esc(lit_by)}</text>')
     g.append(f'<rect x="{rx-20}" y="81.5" width="40" height="4" rx="2" fill="{t["primary_light"]}" opacity=".9"/>')
     g.append(f'<rect x="{rx-18}" y="68" width="36" height="10" rx="4" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
     g.append(f'<rect x="{rx-11}" y="61" width="22" height="7" rx="3" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
@@ -1070,6 +1077,87 @@ def org_card(t):
     return svg(W, H, "Building One Tech Group: the ad infrastructure for publishers. Opens the organization on GitHub.", css, "".join(g))
 
 
+# ---------------------------------------------------------------- Rheinturm color chips (no embedded fonts: tiny files)
+def rt_chip(t, name, fill):
+    w = 30 + len(name) * 8 + 14
+    body = (f'<rect x=".5" y=".5" width="{w-1}" height="29" rx="15" fill="{t["card"]}" stroke="{t["border"]}"/>'
+            f'<circle cx="16" cy="15" r="6" fill="{fill}"/>'
+            f'<text x="28" y="19.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12.5" '
+            f'fill="{t["secondary"]}">{name}</text>')
+    return svg(w, 30, f"Light up the Rheinturm in {name}", "", body)
+
+
+# ---------------------------------------------------------------- gravity contribution graph
+LEVELS = {"light": ["#f0eeea", "#c9d4f2", "#93a8e6", "#4d6fd0", "#1d48c0"],
+          "dark": ["#252422", "#1e2a44", "#243056", "#3a57b8", "#7e97e3"]}
+
+
+def gravity(t, mode, days):
+    """Contribution cells fall under gravity, pile up per column and land on an 'LL' made of blocks."""
+    import random
+    rnd = random.Random(42)
+    cs, gap = 14, 3
+    step = cs + gap
+    cols = (len(days) + 6) // 7
+    W = 1200
+    x0 = (W - cols * step) / 2
+    gy0 = 52
+    # letters: two 'L', 5 blocks tall, 3 wide, 1 col gap
+    L_rows = 5
+    letter_cols = {}
+    lc0 = cols // 2 - 4
+    for k, base in enumerate((lc0, lc0 + 5)):
+        letter_cols[base] = L_rows
+        letter_cols[base + 1] = 1
+        letter_cols[base + 2] = 1
+    floor = gy0 + 7 * step + 40 + (L_rows + 7) * step
+    H = floor + 26
+    nz = sorted(c for _, c in days if c > 0)
+    q = [nz[int(len(nz) * f)] if nz else 1 for f in (.25, .5, .75)]
+
+    def level(c):
+        if c == 0:
+            return 0
+        return 1 + sum(c > v for v in q)
+
+    T = 14.0
+    css = font_css(mono_bold=True) + BASE_CSS
+    g = [f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>',
+         f'<text class="mono" x="24" y="32" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">CONTRIBUTIONS · LAST 12 MONTHS · UNDER GRAVITY</text>',
+         f'<line x1="{x0-6}" x2="{x0 + cols * step + 3}" y1="{floor + .5}" y2="{floor + .5}" stroke="{t["border"]}"/>']
+    # letters
+    for c, hgt in letter_cols.items():
+        for r in range(hgt):
+            y = floor - (r + 1) * step + gap
+            g.append(f'<rect x="{x0 + c * step:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{t["text"]}"/>')
+    pile = {c: letter_cols.get(c, 0) for c in range(cols)}
+    falling = []
+    for i, (d, cnt) in enumerate(days):
+        c, r = i // 7, i % 7
+        lv = level(cnt)
+        x, y = x0 + c * step, gy0 + r * step
+        if lv == 0:
+            g.append(f'<rect x="{x:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{LEVELS[mode][0]}"/>')
+        else:
+            falling.append((rnd.uniform(1.4, 5.2), c, r, x, y, lv))
+    falling.sort()
+    for ts, c, r, x, y, lv in falling:
+        land = floor - (pile[c] + 1) * step + gap
+        pile[c] += 1
+        dy = land - y
+        fd = 0.25 + (dy / 900) ** 0.5
+        kt = [0, ts / T, (ts + fd) / T, (ts + fd + .12) / T, (ts + fd + .24) / T, (T - .7) / T, (T - .6) / T, 1]
+        vals = ["0 0", "0 0", f"0 {dy:.1f}", f"0 {dy-6:.1f}", f"0 {dy:.1f}", f"0 {dy:.1f}", "0 0", "0 0"]
+        g.append(f'<rect x="{x:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{LEVELS[mode][lv]}">'
+                 f'<animateTransform attributeName="transform" type="translate" dur="{T}s" repeatCount="indefinite" '
+                 f'values="{";".join(vals)}" keyTimes="{";".join(f"{k:.4f}" for k in kt)}" calcMode="spline" '
+                 f'keySplines="0 0 1 1;.55 0 1 .45;.2 .6 .4 1;.6 0 1 .4;0 0 1 1;0 0 1 1;0 0 1 1"/>'
+                 f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="1;1;0;0;1" '
+                 f'keyTimes="0;{(T-1.1)/T:.4f};{(T-.75)/T:.4f};{(T-.5)/T:.4f};1"/></rect>')
+    return svg(W, H, "Contribution graph of the last 12 months: the cells fall under gravity and pile up on the letters LL.",
+               css, "".join(g))
+
+
 # ---------------------------------------------------------------- live data
 LAT, LON = 51.2277, 6.7735
 
@@ -1151,7 +1239,8 @@ def main():
 
     if args.live:
         user = os.environ.get("GH_USER", "onetechgroupll")
-        st = calendar_stats(fetch_calendar(user, os.environ["GITHUB_TOKEN"]))
+        days = fetch_calendar(user, os.environ["GITHUB_TOKEN"])
+        st = calendar_stats(days)
         try:
             wx = fetch_weather()
         except Exception as e:  # weather is decoration: fall back, never fail the build
@@ -1164,10 +1253,14 @@ def main():
         import datetime as dt
         from zoneinfo import ZoneInfo
         wx["season"] = args.season or season_for(dt.datetime.now(ZoneInfo("Europe/Berlin")))
+        from rheinturm import COLORS, load_state
+        rt = load_state()
         print("weather:", wx)
         for mode, t in THEMES.items():
             write(f"stats-{mode}.svg", stats(t, mode, st))
-            write(f"skyline-{mode}.svg", skyline(t, mode, **wx))
+            write(f"gravity-{mode}.svg", gravity(t, mode, days))
+            write(f"skyline-{mode}.svg", skyline(t, mode, **wx, pod=COLORS[rt["color"]][0 if mode == "light" else 1],
+                                                 lit_by=rt.get("user")))
         return
 
     for name, fn in [("header", header), ("focus", focus), ("terminal", terminal)]:
@@ -1180,6 +1273,9 @@ def main():
         write(f"btn-web-{mode}.svg", button(t, "onetech.group", "web"))
         write(f"open-to-{mode}.svg", open_to(t))
         write(f"org-card-{mode}.svg", org_card(t))
+        from rheinturm import COLORS
+        for name, (lf, df) in COLORS.items():
+            write(f"rt-{name}-{mode}.svg", rt_chip(t, name, lf if mode == "light" else df))
         for p in OSS:
             write(f"oss-{p['repo'].split('/')[1]}-{mode}.svg", oss_card(t, p))
 

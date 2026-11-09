@@ -1,4 +1,4 @@
-name: profile (stats, live skyline, snake)
+name: profile (stats, live skyline, gravity)
 
 on:
   schedule:
@@ -26,13 +26,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GH_USER: ${{ github.repository_owner }}
         run: python3 tools/build_svgs.py --live --out dist
-
-      - uses: Platane/snk@v3
-        with:
-          github_user_name: ${{ github.repository_owner }}
-          outputs: |
-            dist/snake-light.svg?palette=github-light&color_snake=#1d48c0&color_dots=#f0eeea,#c9d4f2,#93a8e6,#4d6fd0,#1d48c0
-            dist/snake-dark.svg?palette=github-dark&color_snake=#7e97e3&color_dots=#252422,#1e2a44,#243056,#3a57b8,#7e97e3
 
       - uses: crazy-max/ghaction-github-pages@v4
         with:
