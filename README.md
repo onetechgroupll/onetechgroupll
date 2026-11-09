@@ -9,7 +9,7 @@
   <a href="https://www.linkedin.com/in/lucaslingensll/"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/btn-linkedin-dark.svg"><img alt="LinkedIn" src="./assets/btn-linkedin-light.svg" height="40"></picture></a>
   <a href="https://onetech.group"><picture><source media="(prefers-color-scheme: dark)" srcset="./assets/btn-web-dark.svg"><img alt="onetech.group" src="./assets/btn-web-light.svg" height="40"></picture></a>
   <br>
-  <picture><source media="(prefers-color-scheme: dark)" srcset="./assets/open-to-dark.svg"><img alt="Based in Germany. Open to tech partnerships and talent." src="./assets/open-to-light.svg" height="32"></picture>
+  <picture><source media="(prefers-color-scheme: dark)" srcset="./assets/open-to-dark.svg"><img alt="Based in Düsseldorf. Open to tech partnerships and talent." src="./assets/open-to-light.svg" height="32"></picture>
 </p>
 
 ### What I build

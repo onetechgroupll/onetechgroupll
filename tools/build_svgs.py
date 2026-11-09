@@ -973,7 +973,7 @@ def button(t, label, icon):
 
 
 def open_to(t):
-    parts = [("BASED IN", "Germany"), ("OPEN TO", "tech partnerships · talent")]
+    parts = [("BASED IN", "Düsseldorf"), ("OPEN TO", "tech partnerships · talent")]
     fs = 12
     adv = fs * MONO_ADV
     x = 0
@@ -986,7 +986,7 @@ def open_to(t):
                     f'<tspan dx="{adv:.1f}" fill="{t["text"]}">{val}</tspan></text>')
         x += w + 8
     css = font_css(geist=False) + BASE_CSS
-    return svg(int(x - 8), 32, "Based in Germany. Open to tech partnerships and talent.", css, "".join(body))
+    return svg(int(x - 8), 32, "Based in Düsseldorf. Open to tech partnerships and talent.", css, "".join(body))
 
 
 # ---------------------------------------------------------------- org card (links to the OTG org)
