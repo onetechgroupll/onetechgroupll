@@ -394,7 +394,7 @@ def terminal(t):
              ("104", "cashflow.plan", [.46, .6, .52, .44, .46]),
              ("105", "code.review", [.7, .52, .76, .6, .7])]
     rows = [("cmd", "whoami"),
-            ("out", [("founder & md @ one tech group", sec), (" · building since 2015", mut)]),
+            ("out", [("founder & md @ one tech group", sec), (" · building companies since 2008", mut)]),
             ("gap",),
             ("cmd", "lucas --help"),
             ("out", [("usage: lucas ", sec), ("[--business] [--product] [--build] [--lead] [--deals]", mut)])]
@@ -476,7 +476,7 @@ def terminal(t):
                f".cur{{visibility:hidden;animation:on .01s {t0:.2f}s forwards, bl 1s steps(1) {t0:.2f}s infinite}}")
     body.append(f'<text class="mono" x="{X}" y="{y}" font-size="{fs}" fill="{ok}">$</text>')
     body.append(f'<rect class="cur" x="{TX}" y="{y-fs+2}" width="{adv:.1f}" height="{fs+2}" fill="{link}"/>')
-    title = ("Terminal. whoami: founder and MD at One Tech Group, building since 2015. "
+    title = ("Terminal. whoami: founder and MD at One Tech Group, building companies since 2008. "
              "Roles: business (finance, controlling, planning), product, build (writes and ships own software), "
              "lead (teams and developers), deals (investments, holdings, M&amp;A). "
              "Principles: probe reality before you trust your model; read the source of truth; "
