@@ -1093,68 +1093,61 @@ LEVELS = {"light": ["#f0eeea", "#c9d4f2", "#93a8e6", "#4d6fd0", "#1d48c0"],
 
 
 def gravity(t, mode, days):
-    """Contribution cells fall under gravity, pile up per column and land on an 'LL' made of blocks."""
-    import random
-    rnd = random.Random(42)
-    cs, gap = 14, 3
-    step = cs + gap
-    cols = (len(days) + 6) // 7
+    """"Settle": the contribution calendar collapses into weekly bars (active days per week) and rebuilds."""
+    import datetime as dt
+    weeks = [days[i:i + 7] for i in range(0, len(days), 7)]
+    first = next((i for i, w in enumerate(weeks) if any(c for _, c in w)), 0)
+    weeks = weeks[first:]
+    n = len(weeks)
     W = 1200
-    x0 = (W - cols * step) / 2
-    gy0 = 52
-    # letters: two 'L', 5 blocks tall, 3 wide, 1 col gap
-    L_rows = 5
-    letter_cols = {}
-    lc0 = cols // 2 - 4
-    for k, base in enumerate((lc0, lc0 + 5)):
-        letter_cols[base] = L_rows
-        letter_cols[base + 1] = 1
-        letter_cols[base + 2] = 1
-    floor = gy0 + 7 * step + 40 + (L_rows + 7) * step
-    H = floor + 26
+    step = min(26.0, (W - 96) / max(n, 1))
+    cs = step - 4
+    x0 = (W - n * step + 4) / 2
+    y0 = 74
+    base = y0 + 7 * step  # floor under row 6
+    H = int(base + 46)
     nz = sorted(c for _, c in days if c > 0)
     q = [nz[int(len(nz) * f)] if nz else 1 for f in (.25, .5, .75)]
 
     def level(c):
-        if c == 0:
-            return 0
-        return 1 + sum(c > v for v in q)
+        return 0 if c == 0 else 1 + sum(c > v for v in q)
 
-    T = 14.0
+    T, t_set, d_set, t_back = 12.0, 3.0, 0.9, 9.0
     css = font_css(mono_bold=True) + BASE_CSS
     g = [f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>',
-         f'<text class="mono" x="24" y="32" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">CONTRIBUTIONS · LAST 12 MONTHS · UNDER GRAVITY</text>',
-         f'<line x1="{x0-6}" x2="{x0 + cols * step + 3}" y1="{floor + .5}" y2="{floor + .5}" stroke="{t["border"]}"/>']
-    # letters
-    for c, hgt in letter_cols.items():
-        for r in range(hgt):
-            y = floor - (r + 1) * step + gap
-            g.append(f'<rect x="{x0 + c * step:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{t["text"]}"/>')
-    pile = {c: letter_cols.get(c, 0) for c in range(cols)}
-    falling = []
-    for i, (d, cnt) in enumerate(days):
-        c, r = i // 7, i % 7
-        lv = level(cnt)
-        x, y = x0 + c * step, gy0 + r * step
-        if lv == 0:
-            g.append(f'<rect x="{x:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{LEVELS[mode][0]}"/>')
-        else:
-            falling.append((rnd.uniform(1.4, 5.2), c, r, x, y, lv))
-    falling.sort()
-    for ts, c, r, x, y, lv in falling:
-        land = floor - (pile[c] + 1) * step + gap
-        pile[c] += 1
-        dy = land - y
-        fd = 0.25 + (dy / 900) ** 0.5
-        kt = [0, ts / T, (ts + fd) / T, (ts + fd + .12) / T, (ts + fd + .24) / T, (T - .7) / T, (T - .6) / T, 1]
-        vals = ["0 0", "0 0", f"0 {dy:.1f}", f"0 {dy-6:.1f}", f"0 {dy:.1f}", f"0 {dy:.1f}", "0 0", "0 0"]
-        g.append(f'<rect x="{x:.1f}" y="{y}" width="{cs}" height="{cs}" rx="3" fill="{LEVELS[mode][lv]}">'
-                 f'<animateTransform attributeName="transform" type="translate" dur="{T}s" repeatCount="indefinite" '
-                 f'values="{";".join(vals)}" keyTimes="{";".join(f"{k:.4f}" for k in kt)}" calcMode="spline" '
-                 f'keySplines="0 0 1 1;.55 0 1 .45;.2 .6 .4 1;.6 0 1 .4;0 0 1 1;0 0 1 1;0 0 1 1"/>'
-                 f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="1;1;0;0;1" '
-                 f'keyTimes="0;{(T-1.1)/T:.4f};{(T-.75)/T:.4f};{(T-.5)/T:.4f};1"/></rect>')
-    return svg(W, H, "Contribution graph of the last 12 months: the cells fall under gravity and pile up on the letters LL.",
+         f'<text class="mono" x="24" y="34" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">CONTRIBUTIONS · LAST 12 MONTHS</text>']
+    # phase caption cross-fade (top right)
+    for k, (lab, show) in enumerate([("calendar", "1;1;0;0;1;1"), ("active days per week", "0;0;1;1;0;0")]):
+        g.append(f'<text class="mono" x="{W-24}" y="34" text-anchor="end" font-size="11" letter-spacing="1" fill="{t["link"]}" opacity="{show[0]}">'
+                 f'{lab}<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="{show}" '
+                 f'keyTimes="0;{t_set/T:.4f};{(t_set+.5)/T:.4f};{t_back/T:.4f};{(t_back+.5)/T:.4f};1"/></text>')
+    g.append(f'<line x1="{x0-6:.1f}" x2="{x0 + n*step + 2:.1f}" y1="{base + 2.5:.1f}" y2="{base + 2.5:.1f}" stroke="{t["border"]}"/>')
+    last_month = None
+    for c, wk in enumerate(weeks):
+        x = x0 + c * step
+        m = dt.date.fromisoformat(wk[0][0]).month
+        if m != last_month:
+            g.append(f'<text class="mono" x="{x:.1f}" y="{base + 22:.1f}" font-size="10" fill="{t["muted"]}">'
+                     f'{["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"][m-1]}</text>')
+            last_month = m
+        active = [r for r, (_, cnt) in enumerate(wk) if cnt > 0]
+        lag = c * 0.025
+        ts, te, tb, tbe = t_set + lag, t_set + lag + d_set, t_back + lag, t_back + lag + d_set
+        kt = f"0;{ts/T:.4f};{te/T:.4f};{tb/T:.4f};{tbe/T:.4f};1"
+        for r, (_, cnt) in enumerate(wk):
+            y = y0 + r * step
+            lv = level(cnt)
+            if lv == 0:
+                g.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{cs:.1f}" height="{cs:.1f}" rx="3" fill="{LEVELS[mode][0]}">'
+                         f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="1;1;0;0;1;1" keyTimes="{kt}"/></rect>')
+                continue
+            target = 7 - len(active) + active.index(r)
+            dy = (target - r) * step
+            g.append(f'<rect x="{x:.1f}" y="{y:.1f}" width="{cs:.1f}" height="{cs:.1f}" rx="3" fill="{LEVELS[mode][lv]}">'
+                     f'<animateTransform attributeName="transform" type="translate" dur="{T}s" repeatCount="indefinite" '
+                     f'values="0 0;0 0;0 {dy:.1f};0 {dy:.1f};0 0;0 0" keyTimes="{kt}" calcMode="spline" '
+                     f'keySplines="0 0 1 1;.5 0 .2 1;0 0 1 1;.5 0 .2 1;0 0 1 1"/></rect>')
+    return svg(W, H, "Contribution calendar of the last 12 months; it settles into weekly bars of active days and rebuilds.",
                css, "".join(g))
 
 

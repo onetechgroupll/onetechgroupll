@@ -67,7 +67,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/gravity-dark.svg">
-  <img alt="Contribution graph of the last 12 months: the cells fall under gravity and pile up on the letters LL." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/gravity-light.svg" width="100%">
+  <img alt="Contribution calendar of the last 12 months; it settles into weekly bars of active days and rebuilds." src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/gravity-light.svg" width="100%">
 </picture>
 
 ### Born, still living and working in Düsseldorf
