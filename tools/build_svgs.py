@@ -333,6 +333,42 @@ def window(a, b):
 STAGES = [stage_adtech, stage_retail, stage_sync, stage_fintech]
 
 
+# ---------------------------------------------------------------- open source
+OSS = [
+    dict(repo="onetechgroupll/eigen-beam", name="eigen.beam", license="MIT",
+         l1="Mobile live-sync presentations: the presenter steers,",
+         l2="the audience follows on their own phones, in lockstep.",
+         tags=["SVELTEKIT", "SSE", "MCP", "BUN", "RAILWAY"]),
+]
+
+
+def oss_card(t, p):
+    W, H = 1200, 196
+    sw = 282 - 44  # same stage width as the focus cards
+    style = font_css() + BASE_CSS + """
+@keyframes blink{0%,49%{opacity:1}50%,100%{opacity:.25}}
+.live{animation:blink 1.6s steps(1) infinite}
+"""
+    g = [f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="{t["card"]}" stroke="{t["border"]}"/>',
+         f'<rect x="22" y="38" width="{sw}" height="120" rx="8" fill="{t["section"]}"/>',
+         f'<g transform="translate(22,38)">{stage_sync(t, sw)}</g>']
+    x = 22 + sw + 36
+    g.append(f'<text class="mono" x="{x}" y="50" font-size="11" letter-spacing="1.6" fill="{t["muted"]}">OPEN SOURCE · {p["license"]}</text>')
+    g.append(f'<circle class="live" cx="{W-30}" cy="32" r="2.5" fill="{t["success"]}"/>')
+    g.append(f'<text class="sans" x="{x}" y="88" font-size="26" font-weight="620" letter-spacing="-.5" fill="{t["text"]}">{p["name"]}</text>')
+    g.append(f'<text class="sans" x="{x}" y="116" font-size="14" fill="{t["secondary"]}">{p["l1"]}</text>')
+    g.append(f'<text class="sans" x="{x}" y="136" font-size="14" fill="{t["secondary"]}">{p["l2"]}</text>')
+    tx = x
+    for tag in p["tags"]:
+        w = len(tag) * 10 * MONO_ADV + 16
+        g.append(f'<rect x="{tx:.0f}" y="152" width="{w:.0f}" height="20" rx="4" fill="{t["primary_light"]}"/>')
+        g.append(f'<text class="mono" x="{tx+8:.0f}" y="166" font-size="10" fill="{t["link"]}">{tag}</text>')
+        tx += w + 6
+    g.append(f'<text class="mono" x="{W-28}" y="166" text-anchor="end" font-size="12" fill="{t["link"]}">github.com/{p["repo"]} →</text>')
+    alt = f'Open source ({p["license"]}): {p["name"]}. {p["l1"]} {p["l2"]}'
+    return svg(W, H, alt, style, "".join(g))
+
+
 # ---------------------------------------------------------------- terminal
 def terminal(t):
     W = 1200
@@ -944,6 +980,8 @@ def main():
         write(f"btn-linkedin-{mode}.svg", button(t, "LinkedIn", "linkedin"))
         write(f"btn-web-{mode}.svg", button(t, "onetech.group", "web"))
         write(f"open-to-{mode}.svg", open_to(t))
+        for p in OSS:
+            write(f"oss-{p['repo'].split('/')[1]}-{mode}.svg", oss_card(t, p))
 
 
 if __name__ == "__main__":
