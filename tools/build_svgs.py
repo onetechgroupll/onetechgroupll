@@ -450,7 +450,7 @@ def terminal(t):
     flags = [("--business", "finance, controlling, planning"),
              ("--product ", "from problem to shipped product"),
              ("--build   ", "writes and ships own software"),
-             ("--lead    ", "leads teams and developers"),
+             ("--lead    ", "leads teams and adventures"),
              ("--deals   ", "investments, holdings, M&A")]
     procs = [("101", "deals.invest", [.62, .78, .55, .7, .62]),
              ("102", "product.ship", [.84, .66, .9, .74, .84]),
