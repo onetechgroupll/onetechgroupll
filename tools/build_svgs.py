@@ -791,7 +791,7 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
             f'<path d="M-36,4 H36" stroke="{t["primary"]}" stroke-width="1.2" stroke-dasharray="6 5" opacity=".45"/>'
             f'<path d="M34,2 l6,-2 M34,3 l6,2" stroke="{t["primary"]}" stroke-width="1" opacity=".45"/>'
         )
-        g.append(f'<g><g><g transform="scale(1.7)">{croc}</g><animateTransform attributeName="transform" type="translate" dur="2.2s" '
+        g.append(f'<g><g><g transform="scale(.8)">{croc}</g><animateTransform attributeName="transform" type="translate" dur="2.2s" '
                  f'repeatCount="indefinite" values="0,0;0,1.5;0,0"/></g>'
                  f'<animateMotion dur="85s" begin="-50s" repeatCount="indefinite" path="M-60,{G+44} H1260"/></g>')
 
