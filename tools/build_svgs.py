@@ -1079,7 +1079,7 @@ def org_card(t):
 
 # ---------------------------------------------------------------- Rheinturm color chips (no embedded fonts: tiny files)
 def rt_chip(t, name, fill):
-    w = 30 + len(name) * 8 + 14
+    w = int(28 + len(name) * 7.6 + 14)  # ~7.6px per char of system mono at 12.5px; 14px right padding
     body = (f'<rect x=".5" y=".5" width="{w-1}" height="29" rx="15" fill="{t["card"]}" stroke="{t["border"]}"/>'
             f'<circle cx="16" cy="15" r="6" fill="{fill}"/>'
             f'<text x="28" y="19.5" font-family="ui-monospace,SFMono-Regular,Menlo,Consolas,monospace" font-size="12.5" '
