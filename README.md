@@ -30,7 +30,7 @@
 
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="./assets/terminal-dark.svg">
-  <img alt="Terminal. whoami: founder and MD at One Tech Group. Principles: surgical changes, root cause over shortcut, ship daily. Motto: probe reality before you trust your model." src="./assets/terminal-light.svg" width="100%">
+  <img alt="Terminal. whoami: founder and MD at One Tech Group, building since 2015. lucas --help: business (finance, controlling, planning), product (from problem to shipped product), build (writes and ships own software), lead (teams and developers), deals (investments, holdings, M&amp;A). top: these roles run in parallel. Principles: probe reality before you trust your model; read the source of truth, don't reconstruct; root cause over shortcut; done means works in production." src="./assets/terminal-light.svg" width="100%">
 </picture>
 
 ### Stack
