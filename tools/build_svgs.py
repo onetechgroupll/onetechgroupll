@@ -444,7 +444,7 @@ CLOCK_SEP = {"light": "#dc2626", "dark": "#f87171"}  # Lichtzeitpegel separators
 LINE = {"light": "#bdb6ab", "dark": "#55514c"}
 
 
-def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None):
+def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=None, season=None):
     """Duesseldorf skyline as flat line illustration.
 
     crop=(x, y, w, h) renders a viewBox crop (used for the square avatar).
@@ -646,6 +646,7 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
     if night or dusk:
         g.append(f'<rect width="{W}" height="{H}" fill="{NIGHT[mode]}" opacity="{(0.5 if mode == "light" else 0.38) if night else 0.12}"/>')
     g += L
+    g += season_fx(t, mode, season, G, W)
     g += weather_fx(t, mode, weather, G, W, H)
 
     if label:
@@ -655,6 +656,9 @@ def skyline(t, mode, crop=None, label=True, phase="day", weather="clear", temp=N
             sub += f" · {temp:.0f} °C · {WEATHER_LABEL[weather]}"
         lab = t["muted"] if not night else ("#c9cfe0" if mode == "light" else t["muted"])
         g.append(f'<text class="mono" x="32" y="62" font-size="10.5" letter-spacing="1" fill="{lab}">{sub}</text>')
+        if season:
+            g.append(f'<text class="mono" x="32" y="80" font-size="10.5" font-weight="700" letter-spacing="1" '
+                     f'fill="{"#f87171" if season in ("hoppeditz", "karneval") and (night or mode == "dark") else "#dc2626" if season in ("hoppeditz", "karneval") else lab}">{SEASON_LABEL[season]}</text>')
 
     g.append('</g>')
     if crop is None:
@@ -748,6 +752,114 @@ def weather_fx(t, mode, weather, G, W, H):
     if weather == "storm":
         out.append(f'<rect class="flash" width="{W}" height="{H}" fill="#ffffff"/>')
         out.append('<path class="flash" d="M820,40 L796,112 L816,112 L792,190 L846,96 L824,96 L846,40 Z" fill="#fde68a"/>')
+    return out
+
+
+# ---------------------------------------------------------------- seasons (Duesseldorf calendar)
+SEASON_LABEL = {"hoppeditz": "11.11. Hoppeditz erwacht · Helau!", "karneval": "Helau!",
+                "advent": "Advent", "christmas": "Frohe Weihnachten", "newyear": "Frohes neues Jahr!"}
+CONFETTI = ["#dc2626", "#1d48c0", "#e0a106", "#16a34a", "#b6358f", "#529abd"]
+
+
+def easter(y):
+    """Anonymous Gregorian algorithm."""
+    import datetime as dt
+    a, b, c = y % 19, y // 100, y % 100
+    d, e = b // 4, b % 4
+    f = (b + 8) // 25
+    g_ = (b - f + 1) // 3
+    h = (19 * a + b - d - g_ + 15) % 30
+    i, k = c // 4, c % 4
+    l_ = (32 + 2 * e + 2 * i - h - k) % 7
+    m = (a + 11 * h + 22 * l_) // 451
+    month = (h + l_ - 7 * m + 114) // 31
+    day = (h + l_ - 7 * m + 114) % 31 + 1
+    return dt.date(y, month, day)
+
+
+def season_for(now):
+    """now: datetime in Europe/Berlin -> season key or None."""
+    import datetime as dt
+    d = now.date()
+    if (d.month == 12 and d.day == 31 and now.hour >= 18) or (d.month == 1 and d.day == 1 and now.hour < 2):
+        return "newyear"
+    if d.month == 11 and d.day == 11:
+        return "hoppeditz"
+    e = easter(d.year)
+    if e - dt.timedelta(days=52) <= d <= e - dt.timedelta(days=47):  # Weiberfastnacht .. Veilchendienstag
+        return "karneval"
+    if d.month == 12 and 24 <= d.day <= 26:
+        return "christmas"
+    nov27 = dt.date(d.year, 11, 27)
+    first_advent = nov27 + dt.timedelta(days=(6 - nov27.weekday()) % 7)
+    if first_advent <= d <= dt.date(d.year, 12, 23):
+        return "advent"
+    return None
+
+
+def _rope(W, y0=262, sag=10, span=150):
+    pts = []
+    for x0 in range(0, W, span):
+        pts.append(f"M{x0},{y0} Q{x0 + span / 2},{y0 + 2 * sag} {x0 + span},{y0}")
+    return " ".join(pts)
+
+
+def _on_rope(x, y0=262, sag=10, span=150):
+    u = (x % span) / span
+    return y0 + 2 * sag * 2 * u * (1 - u)  # quadratic bezier with control at 2*sag -> peak sag
+
+
+def season_fx(t, mode, season, G, W):
+    if not season:
+        return []
+    line = LINE[mode]
+    out = [f'<style>@keyframes bulb{{0%,100%{{opacity:.25}}50%{{opacity:1}}}}.bulb{{animation:bulb 1.6s ease-in-out infinite}}'
+           '@keyframes burst{0%{transform:scale(.15);opacity:0}10%{opacity:1}70%{opacity:.9}100%{transform:scale(1);opacity:0}}'
+           '.burst{transform-box:fill-box;transform-origin:center;animation:burst 2.6s ease-out infinite}</style>']
+    if season in ("hoppeditz", "karneval"):
+        out.append(f'<path d="{_rope(W)}" fill="none" stroke="{line}" stroke-width="1.2"/>')
+        for k, x in enumerate(range(8, W, 22)):
+            y = _on_rope(x)
+            col = "#dc2626" if k % 2 == 0 else "#ffffff"
+            out.append(f'<path d="M{x-6},{y:.1f} L{x+6},{y:.1f} L{x},{y+11:.1f} Z" fill="{col}" stroke="{line}" stroke-width=".6"/>')
+        tiles = []
+        for k in range(8):
+            x, y = (k * 23) % 70 + 4, (k * 37) % 90 + 3
+            tiles.append(f'<rect x="{x}" y="{y}" width="4" height="7" rx="1" fill="{CONFETTI[k % 6]}" '
+                         f'transform="rotate({(k * 47) % 180} {x + 2} {y + 3})"/>')
+        out.append('<defs><pattern id="confetti" width="80" height="100" patternUnits="userSpaceOnUse">' + "".join(tiles)
+                   + '<animateTransform attributeName="patternTransform" type="translate" from="0 0" to="16 100" '
+                     'dur="6s" repeatCount="indefinite"/></pattern></defs>')
+        out.append(f'<rect width="{W}" height="{G}" fill="url(#confetti)" opacity=".7"/>')
+        # "Helau!" bubble left of the LL sign, tail pointing at it
+        bx, by, bw, bh = 318, 92, 66, 24
+        out.append(f'<rect x="{bx}" y="{by}" width="{bw}" height="{bh}" rx="6" fill="{t["card"]}" stroke="#dc2626" stroke-width="1.5"/>'
+                   f'<path d="M{bx+bw-14},{by+bh-.5} L{bx+bw+10},{by+bh+12} L{bx+bw-4},{by+bh-.5} Z" fill="{t["card"]}" stroke="#dc2626" stroke-width="1.5" stroke-linejoin="round"/>'
+                   f'<rect x="{bx+bw-14.5}" y="{by+bh-3}" width="11" height="2.4" fill="{t["card"]}"/>')
+        out.append(f'<text class="mono" x="{bx+bw/2}" y="{by+16.5}" text-anchor="middle" font-size="12" font-weight="700" fill="#dc2626">Helau!</text>')
+    if season in ("advent", "christmas"):
+        out.append(f'<path d="{_rope(W)}" fill="none" stroke="{line}" stroke-width="1"/>')
+        warm = LIGHT_ON[mode]
+        for k, x in enumerate(range(10, W, 18)):
+            y = _on_rope(x) + 3
+            col = warm if k % 3 else "#dc2626"
+            out.append(f'<circle class="bulb" style="animation-delay:{(k % 5) * .32:.2f}s" cx="{x}" cy="{y:.1f}" r="2.6" fill="{col}"/>')
+        # tree in front of the Altstadt
+        tx, base = 700, G - 3
+        for k, (w, h) in enumerate([(46, 26), (36, 24), (24, 22)]):
+            y = base - 18 - k * 18
+            out.append(f'<path d="M{tx - w / 2},{y} L{tx},{y - h} L{tx + w / 2},{y} Z" fill="#1f7a3e" stroke="{line}" stroke-width=".8"/>')
+        out.append(f'<rect x="{tx-3}" y="{base-18}" width="6" height="18" fill="#7b400e"/>')
+        for k, (dx, dy) in enumerate([(-12, -24), (8, -30), (-4, -44), (6, -58), (-8, -62), (2, -74)]):
+            out.append(f'<circle class="bulb" style="animation-delay:{k * .27:.2f}s" cx="{tx + dx}" cy="{base + dy}" r="2" fill="{warm}"/>')
+        out.append(f'<path d="M{tx},{base-90} l2.4,5 5.4,.6 -4,3.6 1.2,5.3 -5,-2.8 -5,2.8 1.2,-5.3 -4,-3.6 5.4,-.6 z" fill="{warm}"/>')
+    if season == "newyear":
+        for k, (cx, cy, r) in enumerate([(230, 92, 42), (640, 70, 52), (820, 118, 38), (1010, 64, 48), (300, 112, 30), (1120, 150, 30)]):
+            col = CONFETTI[k % 6] if mode == "light" else ["#f87171", "#7e97e3", "#fbbf24", "#4ade80", "#d56db6", "#a4c9dc"][k % 6]
+            rays = "".join(f'<line x1="{cx}" y1="{cy}" x2="{cx + r * __import__("math").cos(a / 14 * 6.2832):.1f}" '
+                           f'y2="{cy + r * __import__("math").sin(a / 14 * 6.2832):.1f}" stroke="{col}" stroke-width="2" '
+                           f'stroke-linecap="round" stroke-dasharray="3 5"/>' for a in range(14))
+            out.append(f'<g class="burst" style="animation-delay:{k * .55:.2f}s">{rays}</g>')
     return out
 
 
@@ -877,6 +989,37 @@ def open_to(t):
     return svg(int(x - 8), 32, "Based in Germany. Open to tech partnerships and talent.", css, "".join(body))
 
 
+# ---------------------------------------------------------------- org card (links to the OTG org)
+def org_card(t):
+    W, H = 1200, 132
+    css = font_css(mono_bold=True) + BASE_CSS + """
+@keyframes fan0{0%,15%{transform:rotate(0)}40%,80%{transform:rotate(-16deg)}100%{transform:rotate(0)}}
+@keyframes fan2{0%,15%{transform:rotate(0)}40%,80%{transform:rotate(16deg)}100%{transform:rotate(0)}}
+.k0{transform-box:view-box;transform-origin:96px 150px;animation:fan0 7s cubic-bezier(.3,.7,.2,1) infinite}
+.k2{transform-box:view-box;transform-origin:96px 150px;animation:fan2 7s cubic-bezier(.3,.7,.2,1) infinite}
+@media (prefers-reduced-motion: reduce){.k0{transform:rotate(-16deg)}.k2{transform:rotate(16deg)}}
+@keyframes nudge{0%,100%{transform:translateX(0)}50%{transform:translateX(5px)}}
+.arrow{animation:nudge 1.8s ease-in-out infinite}
+"""
+    g = [f'<clipPath id="oc"><rect width="{W}" height="{H}" rx="12"/></clipPath>',
+         f'<g clip-path="url(#oc)"><rect width="{W}" height="{H}" fill="{t["card"]}"/>']
+    for k in (0, 2, 1):  # front card last so it sits on top
+        front = k == 1
+        g.append(f'<g class="k{k}"><rect x="72" y="26" width="48" height="66" rx="6" fill="{t["primary"] if front else t["section"]}" '
+                 f'stroke="{t["primary"] if front else t["border"]}"/>'
+                 + ("".join(f'<rect x="{80 + c * 11}" y="{36 + r * 9}" width="8" height="6" rx="1" fill="#ffffff" opacity=".9"/>'
+                            for r in range(3) for c in range(3)) if front else "") + '</g>')
+    g.append('</g>')
+    g.append(f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="none" stroke="{t["border"]}"/>')
+    g.append(f'<text class="mono" x="168" y="46" font-size="11" letter-spacing="1.8" fill="{t["muted"]}">BUILDING</text>')
+    g.append(f'<text class="sans" x="166" y="82" font-size="30" font-weight="640" letter-spacing="-.8" fill="{t["text"]}">One Tech Group</text>')
+    g.append(f'<text class="sans" x="168" y="108" font-size="15" fill="{t["secondary"]}">The ad infrastructure for publishers.</text>')
+    g.append(f'<text class="mono" x="{W-80}" y="72" text-anchor="end" font-size="13" fill="{t["link"]}">github.com/One-Tech-Group-GmbH</text>')
+    g.append(f'<g class="arrow"><path d="M{W-62},66 h22 m-8,-8 l8,8 l-8,8" fill="none" stroke="{t["link"]}" stroke-width="2" '
+             f'stroke-linecap="round" stroke-linejoin="round"/></g>')
+    return svg(W, H, "Building One Tech Group: the ad infrastructure for publishers. Opens the organization on GitHub.", css, "".join(g))
+
+
 # ---------------------------------------------------------------- live data
 LAT, LON = 51.2277, 6.7735
 
@@ -944,6 +1087,7 @@ def main():
     ap.add_argument("--out", default=str(OUT))
     ap.add_argument("--phase")
     ap.add_argument("--weather")
+    ap.add_argument("--season", choices=sorted(SEASON_LABEL))
     args = ap.parse_args()
     out = Path(args.out)
     out.mkdir(parents=True, exist_ok=True)
@@ -965,6 +1109,9 @@ def main():
             wx["phase"] = args.phase
         if args.weather:
             wx["weather"] = args.weather
+        import datetime as dt
+        from zoneinfo import ZoneInfo
+        wx["season"] = args.season or season_for(dt.datetime.now(ZoneInfo("Europe/Berlin")))
         print("weather:", wx)
         for mode, t in THEMES.items():
             write(f"stats-{mode}.svg", stats(t, mode, st))
@@ -980,6 +1127,7 @@ def main():
         write(f"btn-linkedin-{mode}.svg", button(t, "LinkedIn", "linkedin"))
         write(f"btn-web-{mode}.svg", button(t, "onetech.group", "web"))
         write(f"open-to-{mode}.svg", open_to(t))
+        write(f"org-card-{mode}.svg", org_card(t))
         for p in OSS:
             write(f"oss-{p['repo'].split('/')[1]}-{mode}.svg", oss_card(t, p))
 

@@ -19,6 +19,13 @@
   <img alt="Four focus areas. AdTech: real-time auctions decided in milliseconds. Retail Media: from shelf to screen to measured sale. Mobile Applications: native apps, for example live-sync with every phone in lockstep. FinTech: money flows that reconcile themselves." src="./assets/focus-light.svg" width="100%">
 </picture>
 
+<a href="https://github.com/One-Tech-Group-GmbH">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="./assets/org-card-dark.svg">
+    <img alt="Building One Tech Group, the ad infrastructure for publishers. Open the organization on GitHub." src="./assets/org-card-light.svg" width="100%">
+  </picture>
+</a>
+
 ### How I work
 
 <picture>
