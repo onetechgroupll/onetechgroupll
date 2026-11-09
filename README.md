@@ -44,4 +44,9 @@
   <img alt="Contribution graph being eaten by a snake" src="https://raw.githubusercontent.com/onetechgroupll/onetechgroupll/output/snake-light.svg" width="100%">
 </picture>
 
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="./assets/skyline-dark.svg">
+  <img alt="Düsseldorf skyline: Rheinturm with its Lichtzeitpegel clock counting the seconds, the Stadttor with an LL rooftop sign, Neuer Zollhof, the Altstadt with St. Lambertus, the Rheinkniebrücke and boats on the Rhine." src="./assets/skyline-light.svg" width="100%">
+</picture>
+
 <sub>Most of my work lives in private repos. Graphics are hand-built SVG in the <a href="https://github.com/One-Tech-Group-GmbH/otg-design-system">OTG Design System</a> palette. Regenerate with <code>python3 tools/build_svgs.py</code>.</sub>

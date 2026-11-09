@@ -402,13 +402,235 @@ def esc(s):
     return s.replace("&", "&amp;").replace("<", "&lt;").replace(">", "&gt;")
 
 
+# ---------------------------------------------------------------- skyline
+LIGHT_ON = {"light": "#e0a106", "dark": "#fbbf24"}   # warm window / clock light
+CLOCK_SEP = {"light": "#dc2626", "dark": "#f87171"}  # Lichtzeitpegel separators
+LINE = {"light": "#bdb6ab", "dark": "#55514c"}
+
+
+def skyline(t, mode, crop=None, label=True):
+    """Duesseldorf skyline as flat line illustration.
+
+    crop=(x, y, w, h) renders a viewBox crop (used for the square avatar).
+    """
+    W, H = 1200, 400
+    G = 300  # promenade / waterline
+    on = LIGHT_ON[mode]
+    st = LINE[mode]  # line-art stroke: stronger than --ds-border, still warm-neutral
+    css = font_css(geist=False, mono_bold=True) + BASE_CSS + f"""
+@keyframes waves{{from{{transform:translateX(0)}}to{{transform:translateX(-48px)}}}}
+.wave{{animation:waves 4s linear infinite}}.wave2{{animation-duration:6s}}
+@keyframes glow{{0%,100%{{opacity:.35}}50%{{opacity:.8}}}}
+.glow{{animation:glow 3s ease-in-out infinite}}
+@keyframes flick{{0%,92%,100%{{opacity:1}}94%{{opacity:.35}}96%{{opacity:1}}97%{{opacity:.5}}}}
+.sign{{animation:flick 7s steps(1) infinite}}
+@keyframes win{{0%,100%{{opacity:0}}40%,70%{{opacity:1}}}}
+.win{{opacity:0;animation:win 9s ease-in-out infinite}}
+@keyframes beacon{{0%,60%,100%{{opacity:.15}}70%,85%{{opacity:1}}}}
+.beacon{{animation:beacon 2s steps(1) infinite}}
+"""
+    g = []
+    vb = crop or (0, 0, W, H)
+    g.append(f'<defs><clipPath id="frame"><rect x="{vb[0]}" y="{vb[1]}" width="{vb[2]}" height="{vb[3]}" rx="{0 if crop else 12}"/></clipPath></defs>')
+    g.append('<g clip-path="url(#frame)">')
+    g.append(f'<rect width="{W}" height="{H}" fill="{t["page"]}"/>')
+
+    def bldg(pts, fill=None, stroke=st, extra=""):
+        d = "M" + " L".join(f"{x},{y}" for x, y in pts) + " Z"
+        return f'<path d="{d}" fill="{fill or t["card"]}" stroke="{stroke}" stroke-width="1.5" stroke-linejoin="round"{extra}/>'
+
+    def windows(x0, y0, cols, rows, dx, dy, w=4, h=3, seed=0):
+        out = []
+        for r in range(rows):
+            for c in range(cols):
+                x, y = x0 + c * dx, y0 + r * dy
+                out.append(f'<rect x="{x}" y="{y}" width="{w}" height="{h}" fill="{t["border"]}"/>')
+                k = (r * 7 + c * 13 + seed) % 23
+                if k in (0, 5):
+                    out.append(f'<rect class="win" style="animation-delay:{(k + r + c) % 9}s" x="{x}" y="{y}" '
+                               f'width="{w}" height="{h}" fill="{on}"/>')
+        return "".join(out)
+
+    # birds (back)
+    for i, (y, dur, beg) in enumerate([(70, 38, 0), (95, 46, 12), (58, 52, 25)]):
+        g.append(f'<path d="M-6,-3 Q-3,-6 0,0 Q3,-6 6,-3" fill="none" stroke="{t["muted"]}" stroke-width="1.4" '
+                 f'stroke-linecap="round"><animateMotion dur="{dur}s" begin="{-beg}s" repeatCount="indefinite" '
+                 f'path="M-20,{y} C300,{y-20} 800,{y+20} 1220,{y-10}"/></path>')
+
+    # haze skyline (back layer)
+    haze = [(0, 240), (40, 225), (95, 250), (330, 230), (380, 245), (600, 236), (660, 250),
+            (720, 228), (780, 244), (990, 232), (1040, 248), (1100, 226), (1150, 242)]
+    for i, (x, y) in enumerate(haze):
+        g.append(f'<rect x="{x}" y="{y}" width="{48 + (i % 3) * 10}" height="{G - y}" fill="{t["border_light"]}"/>')
+
+    # 1. office tower with chimneys (left)
+    g.append(f'<rect x="62" y="70" width="7" height="60" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<rect x="80" y="70" width="7" height="60" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(bldg([(48, G), (48, 128), (130, 128), (130, G)]))
+    g.append(windows(56, 138, 9, 16, 8, 9.5, seed=1))
+    # 2. domed block
+    g.append(f'<path d="M140,{G} V188 A28,28 0 0 1 196,188 V{G} Z" fill="{t["section"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(windows(148, 196, 5, 10, 9, 9.5, seed=4))
+
+    # 3. Gehry buildings, Neuer Zollhof (wavy)
+    gehry = [(210, 262, 175, t["card"]), (266, 312, 150, t["primary_subtle"]), (316, 352, 190, t["section"])]
+    for x0, x1, top, fill in gehry:
+        mid = (x0 + x1) / 2
+        d = (f"M{x0},{G} C{x0-6},{top+60} {x0+8},{top+20} {x0+4},{top} "
+             f"Q{mid},{top-10} {x1-2},{top+4} C{x1+6},{top+40} {x1-8},{top+90} {x1},{G} Z")
+        g.append(f'<path d="{d}" fill="{fill}" stroke="{st}" stroke-width="1.5"/>')
+        g.append(windows(int(x0 + 10), top + 16, int((x1 - x0 - 16) / 9), int((G - top - 24) / 12), 9, 12, w=3, h=5, seed=x0))
+
+    # 4. Stadttor (rhomboid glass tower) with LL rooftop sign
+    sx0, sx1, sxt0, sxt1, stop = 372, 420, 392, 440, 150
+    g.append(bldg([(sx0, G), (sx1, G), (sxt1, stop), (sxt0, stop)], fill=t["primary_light"], stroke=t["primary"]))
+    for k in range(1, 8):
+        y = stop + k * (G - stop) / 8
+        f = (y - stop) / (G - stop)
+        xa, xb = sxt0 + (sx0 - sxt0) * f, sxt1 + (sx1 - sxt1) * f
+        g.append(f'<line x1="{xa:.1f}" y1="{y:.1f}" x2="{xb:.1f}" y2="{y:.1f}" stroke="{t["primary"]}" stroke-width=".8" opacity=".45"/>')
+    g.append(f'<line x1="{sxt0}" y1="{stop}" x2="{sx1}" y2="{G}" stroke="{t["primary"]}" stroke-width=".8" opacity=".45"/>')
+    g.append(f'<line x1="{sxt1}" y1="{stop}" x2="{sx0}" y2="{G}" stroke="{t["primary"]}" stroke-width=".8" opacity=".45"/>')
+    # sign: frame on two legs, glowing LL
+    bx, by = sxt0 + 4, stop - 30
+    g.append(f'<line x1="{bx+8}" y1="{stop}" x2="{bx+8}" y2="{by+22}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<line x1="{bx+32}" y1="{stop}" x2="{bx+32}" y2="{by+22}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<rect class="glow" x="{bx-4}" y="{by-4}" width="48" height="30" rx="6" fill="{t["primary"]}" opacity=".35"/>')
+    g.append(f'<rect x="{bx}" y="{by}" width="40" height="22" rx="4" fill="{t["primary"]}"/>')
+    g.append(f'<text class="mono sign" x="{bx+20}" y="{by+16.5}" text-anchor="middle" font-size="16" '
+             f'font-weight="700" letter-spacing="1" fill="#ffffff">LL</text>')
+
+    # 5. Rheinturm with Lichtzeitpegel
+    rx = 490
+    g.append(bldg([(rx - 13, G), (rx + 13, G), (rx + 6, 92), (rx - 6, 92)]))
+    g.append(f'<rect x="{rx-24}" y="78" width="48" height="14" rx="6" fill="{t["primary"]}"/>')
+    g.append(f'<rect x="{rx-20}" y="81.5" width="40" height="4" rx="2" fill="{t["primary_light"]}" opacity=".9"/>')
+    g.append(f'<rect x="{rx-18}" y="68" width="36" height="10" rx="4" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<rect x="{rx-11}" y="61" width="22" height="7" rx="3" fill="{t["card"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<line x1="{rx}" y1="61" x2="{rx}" y2="18" stroke="{st}" stroke-width="2"/>')
+    g.append(f'<line x1="{rx}" y1="38" x2="{rx}" y2="18" stroke="{t["muted"]}" stroke-width="1"/>')
+    g.append(f'<circle class="beacon" cx="{rx}" cy="16" r="2.6" fill="{CLOCK_SEP[mode]}"/>')
+    # clock: hours tens(2) hours(9) | min tens(5) min(9) | sec tens(5) sec(9); seconds at the bottom
+    groups = [("h10", 2, None), ("h1", 9, None), ("m10", 5, 3600), ("m1", 9, 600), ("s10", 5, 60), ("s1", 9, 10)]
+    y = 104
+    step = 4.1
+    for gi, (_, n, period) in enumerate(groups):
+        if gi:
+            g.append(f'<rect x="{rx-1.6}" y="{y-1}" width="3.2" height="2" fill="{CLOCK_SEP[mode]}"/>')
+            y += step
+        # lamp k (1-based from the bottom of the group) is lit once the digit >= k
+        for k in range(n, 0, -1):
+            g.append(f'<circle cx="{rx}" cy="{y:.1f}" r="1.25" fill="{t["idle"]}"/>')
+            if period:
+                frac = k / (n + 1)
+                g.append(f'<circle cx="{rx}" cy="{y:.1f}" r="1.25" fill="{on}" opacity="0">'
+                         f'<animate attributeName="opacity" values="0;1" keyTimes="0;{frac:.4f}" dur="{period}s" '
+                         f'calcMode="discrete" repeatCount="indefinite"/></circle>')
+            y += step
+    if label:
+        g.append(f'<path d="M{rx+8},180 H{rx+26}" stroke="{t["muted"]}" stroke-width=".8"/>')
+        g.append(f'<text class="mono" x="{rx+30}" y="183.5" font-size="9.5" fill="{t["muted"]}">lichtzeitpegel</text>')
+
+    # 6. Altstadt: Schlossturm, St. Lambertus, gabled houses
+    houses = [(530, 248), (556, 240), (622, 252), (648, 238), (676, 246), (704, 242), (732, 252)]
+    for i, (x, top) in enumerate(houses):
+        w = 26
+        g.append(bldg([(x, G), (x, top + 12), (x + w / 2, top), (x + w, top + 12), (x + w, G)],
+                      fill=t["card"] if i % 2 else t["section"]))
+        g.append(windows(x + 5, top + 18, 2, max(1, (G - top - 24) // 11), 11, 11, w=5, h=5, seed=i * 3))
+    # Schlossturm
+    g.append(bldg([(584, G), (584, 214), (606, 214), (606, G)], fill=t["section"]))
+    g.append(f'<path d="M581,216 Q595,192 609,216 Z" fill="{t["primary_subtle"]}" stroke="{st}" stroke-width="1.5"/>')
+    g.append(f'<line x1="595" y1="200" x2="595" y2="186" stroke="{st}" stroke-width="1.5"/>')
+    # St. Lambertus (twisted, slightly leaning spire)
+    lx = 770
+    g.append(bldg([(lx - 18, G), (lx - 18, 246), (lx + 30, 246), (lx + 30, G)], fill=t["section"]))
+    g.append(bldg([(lx - 9, G), (lx - 9, 192), (lx + 9, 192), (lx + 9, G)]))
+    g.append(bldg([(lx - 11, 192), (lx + 3, 126), (lx + 11, 192)], fill=t["primary_subtle"]))
+    g.append(f'<path d="M{lx-7},180 L{lx+4},150 M{lx-3},188 L{lx+7},162" stroke="{st}" stroke-width=".9"/>')
+    g.append(f'<circle cx="{lx}" cy="206" r="4" fill="none" stroke="{st}" stroke-width="1.2"/>')
+
+    # 7. Rheinkniebruecke (cable-stayed, single pylon)
+    px, deck = 960, 262
+    g.append(f'<rect x="806" y="{deck}" width="394" height="5" fill="{t["section"]}" stroke="{st}" stroke-width="1.2"/>')
+    for k in range(8):
+        y0 = 92 + k * 12
+        for side in (-1, 1):
+            g.append(f'<line x1="{px}" y1="{y0}" x2="{px + side * (34 + k * 22)}" y2="{deck}" stroke="{st}" stroke-width="1"/>')
+    g.append(bldg([(px - 5, G), (px + 5, G), (px + 3, 70), (px - 3, 70)]))
+    for pier in (850, 1070, 1160):
+        g.append(f'<rect x="{pier-3}" y="{deck+5}" width="6" height="{G-deck-5}" fill="{t["section"]}" stroke="{st}" stroke-width="1.2"/>')
+    for i, (beg, rev) in enumerate([(0, False), (-3.5, True), (-7, False)]):
+        path = f"M810,{deck-2} H1200" if not rev else f"M1200,{deck-2} H810"
+        col = on if i != 1 else CLOCK_SEP[mode]
+        g.append(f'<rect x="-4" y="-2" width="8" height="3.4" rx="1.5" fill="{col}"><animateMotion dur="9s" begin="{beg}s" '
+                 f'repeatCount="indefinite" path="{path}"/></rect>')
+
+    # promenade + trees
+    g.append(f'<rect x="0" y="{G-3}" width="{W}" height="5" fill="{t["border"]}"/>')
+    for i, x in enumerate(range(14, W, 23)):
+        if 800 < x < 1200 and i % 2:
+            continue
+        r = 5 + (i % 3)
+        g.append(f'<circle cx="{x}" cy="{G-3-r}" r="{r}" fill="{t["success"]}" opacity=".45"/>')
+
+    # river
+    g.append(f'<rect x="0" y="{G+2}" width="{W}" height="{H-G}" fill="{t["primary_light"]}"/>')
+    g.append(f'<line x1="{rx}" y1="{G+8}" x2="{rx}" y2="{G+70}" stroke="{t["primary"]}" stroke-width="3" '
+             f'stroke-dasharray="6 6" opacity=".18"/>')
+    g.append(f'<line x1="{px}" y1="{G+8}" x2="{px}" y2="{G+60}" stroke="{t["primary"]}" stroke-width="2" '
+             f'stroke-dasharray="5 7" opacity=".14"/>')
+    for i, y in enumerate([G + 18, G + 38, G + 62, G + 84]):
+        cls = "wave" if i % 2 == 0 else "wave wave2"
+        g.append(f'<path class="{cls}" d="M0,{y} H{W+48}" stroke="{t["primary"]}" stroke-width="1.2" '
+                 f'stroke-dasharray="{10+i*4} {26+i*6}" stroke-dashoffset="{i*13}" opacity=".28"/>')
+
+    # boats
+    def sailboat(c):
+        return (f'<path d="M-14,0 H14 L9,7 H-9 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
+                f'<line x1="0" y1="0" x2="0" y2="-28" stroke="{st}" stroke-width="1.2"/>'
+                f'<path d="M1.5,-27 L16,-3 H1.5 Z" fill="{c}"/><path d="M-1.5,-22 L-11,-3 H-1.5 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1"/>')
+    g.append(f'<g>{sailboat(t["primary"])}<animateMotion dur="70s" begin="-20s" repeatCount="indefinite" '
+             f'path="M-40,{G+30} H1240"/></g>')
+    g.append(f'<g>{sailboat(t["accent"])}<animateMotion dur="95s" begin="-70s" repeatCount="indefinite" '
+             f'path="M-40,{G+56} H1240"/></g>')
+    ship = (f'<path d="M-46,0 H50 L42,10 H-40 Z" fill="{t["card"]}" stroke="{st}" stroke-width="1.3"/>'
+            f'<rect x="-34" y="-9" width="62" height="9" rx="2" fill="{t["card"]}" stroke="{st}" stroke-width="1.2"/>'
+            f'<rect x="-22" y="-16" width="30" height="7" rx="2" fill="{t["section"]}" stroke="{st}" stroke-width="1.2"/>'
+            + "".join(f'<rect x="{-30 + k * 9}" y="-6" width="5" height="3" fill="{t["primary"]}" opacity=".7"/>' for k in range(7))
+            + f'<text class="mono" x="-38" y="7.5" font-size="6.5" font-weight="700" fill="{t["link"]}">LL</text>')
+    g.append(f'<g>{ship}<animateMotion dur="120s" begin="-35s" repeatCount="indefinite" path="M1260,{G+80} H-60"/></g>')
+
+    if label:
+        g.append(f'<text class="mono" x="32" y="44" font-size="13" font-weight="700" letter-spacing="2.4" fill="{t["link"]}">DÜSSELDORF</text>')
+        g.append(f'<text class="mono" x="32" y="62" font-size="10.5" letter-spacing="1" fill="{t["muted"]}">51.23° N · 6.77° E</text>')
+
+    g.append('</g>')
+    if crop is None:
+        g.append(f'<rect x=".5" y=".5" width="{W-1}" height="{H-1}" rx="12" fill="none" stroke="{t["border"]}"/>')
+    title = "Duesseldorf skyline: Rheinturm with Lichtzeitpegel clock, Stadttor with LL sign, Neuer Zollhof, Altstadt, Rheinkniebruecke, Rhine"
+    out = svg(W, H, title, css, "".join(g))
+    if crop:
+        out = out.replace(f'width="{W}" height="{H}" viewBox="0 0 {W} {H}"',
+                          f'width="{crop[2]}" height="{crop[3]}" viewBox="{crop[0]} {crop[1]} {crop[2]} {crop[3]}"', 1)
+    return out
+
+
+AVATAR_CROP = (262, 14, 380, 380)  # centred on LL sign + Rheinturm for the circular avatar mask
+
+
 def main():
     OUT.mkdir(exist_ok=True)
-    for name, fn in [("header", header), ("focus", focus), ("terminal", terminal)]:
+    for name, fn in [("header", header), ("focus", focus), ("terminal", terminal),
+                     ("skyline", None)]:
         for mode, t in THEMES.items():
             p = OUT / f"{name}-{mode}.svg"
-            p.write_text(fn(t), encoding="utf-8")
+            p.write_text(fn(t) if fn else skyline(t, mode), encoding="utf-8")
             print(f"{p.relative_to(ROOT)}  {p.stat().st_size/1024:.0f} KB")
+    for mode, t in THEMES.items():
+        p = OUT / f"avatar-{mode}.svg"
+        p.write_text(skyline(t, mode, crop=AVATAR_CROP, label=False), encoding="utf-8")
+        print(f"{p.relative_to(ROOT)}")
 
 
 if __name__ == "__main__":
