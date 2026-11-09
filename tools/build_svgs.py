@@ -833,30 +833,39 @@ def croc_with_easy(t, mode):
     mouth = "#e98a8a" if mode == "light" else "#b85c5c"
     WL = 356
     o = []
-    # --- crocodile (faces right, jaws open)
+    # --- crocodile (body to the right, head turned to the viewer)
     o.append(f'<path d="M340,346 Q300,340 262,352 L262,360 Q300,352 340,360 Z" fill="{cg}" stroke="{cd}" stroke-width="2"/>')  # tail
     o.append(f'<path d="M330,362 Q328,338 360,330 Q420,316 480,318 Q520,318 548,322 L566,346 L566,364 Z" fill="{cg}" stroke="{cd}" stroke-width="2"/>')
     for x in range(356, 536, 18):
         y = 331 - 12 * (1 - abs((x - 446) / 100) ** 2)
         o.append(f'<path d="M{x},{y+3:.0f} l6,-9 l6,9 Z" fill="{cd}"/>')
-    # mouth interior, then teeth, then jaws
-    o.append(f'<path d="M560,342 L626,296 L636,350 L562,352 Z" fill="{mouth}"/>')
-    up = [(560, 342), (628, 294)]
-    for k in range(1, 7):
-        f = k / 7
-        x, y = up[0][0] + (up[1][0] - up[0][0]) * f, up[0][1] + (up[1][1] - up[0][1]) * f
-        o.append(f'<path d="M{x-4:.1f},{y+2.8:.1f} L{x+4:.1f},{y-2.8:.1f} L{x+2:.1f},{y+7:.1f} Z" fill="#ffffff" stroke="{cd}" stroke-width=".6"/>')
-    for k in range(1, 6):
-        x = 566 + k * 11
-        o.append(f'<path d="M{x-4},348 L{x+4},348 L{x},340 Z" fill="#ffffff" stroke="{cd}" stroke-width=".6"/>')
-    o.append(f'<g><path d="M540,320 Q560,312 590,302 L626,286 Q640,282 638,294 L630,298 L560,344 Z" fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>'
-             f'<circle cx="630" cy="288" r="2" fill="{cd}"/>'
-             f'<animateTransform attributeName="transform" type="rotate" dur="3s" repeatCount="indefinite" '
-             f'values="0 560 344;0 560 344;14 560 344;0 560 344" keyTimes="0;.6;.75;1"/></g>')
-    o.append(f'<path d="M558,350 L636,348 Q644,352 636,358 L560,364 Z" fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>')
-    o.append(f'<circle cx="548" cy="314" r="11" fill="{cg}" stroke="{cd}" stroke-width="2"/>'
-             f'<circle cx="550" cy="312" r="6.5" fill="#fff8e1"/><rect x="549" y="306.5" width="3" height="11" rx="1.5" fill="#1f2937"/>'
-             f'<circle cx="548" cy="309.5" r="1.3" fill="#ffffff"/>')
+    # head turned to the viewer, jaws wide open (front view)
+    cx, hw = 596, 46
+    o.append('<g transform="translate(0,-14)">')
+    o.append(f'<ellipse cx="{cx}" cy="332" rx="{hw-6}" ry="26" fill="{mouth}"/>'
+             f'<ellipse cx="{cx}" cy="346" rx="22" ry="9" fill="{"#f3b0b0" if mode == "light" else "#d07a7a"}"/>')
+    # lower jaw (U) with upward teeth
+    o.append(f'<path d="M{cx-hw},334 Q{cx-hw+6},356 {cx},358 Q{cx+hw-6},356 {cx+hw},334 Q{cx+hw+2},362 {cx+30},370 '
+             f'Q{cx},378 {cx-30},370 Q{cx-hw-2},362 {cx-hw},334 Z" fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>')
+    for k in range(-3, 4):
+        x = cx + k * 11
+        y = 334 + 22 * (1 - (k / 4.2) ** 2)
+        o.append(f'<path d="M{x-4:.1f},{y+1:.1f} L{x+4:.1f},{y+1:.1f} L{x:.1f},{y-7:.1f} Z" fill="#ffffff" stroke="{cd}" stroke-width=".7" stroke-linejoin="round"/>')
+    # upper jaw / head with downward teeth, eyes and nostrils
+    up = (f'<path d="M{cx-hw},326 Q{cx-hw},284 {cx},282 Q{cx+hw},284 {cx+hw},326 Q{cx+24},308 {cx},307 Q{cx-24},308 {cx-hw},326 Z" '
+          f'fill="{cg}" stroke="{cd}" stroke-width="2" stroke-linejoin="round"/>')
+    for k in range(-3, 4):
+        x = cx + k * 11
+        y = 307 + 19 * (k / 4.2) ** 2
+        up += f'<path d="M{x-4:.1f},{y-1:.1f} L{x+4:.1f},{y-1:.1f} L{x:.1f},{y+7:.1f} Z" fill="#ffffff" stroke="{cd}" stroke-width=".7" stroke-linejoin="round"/>'
+    up += f'<ellipse cx="{cx-6}" cy="293" rx="2.4" ry="1.6" fill="{cd}"/><ellipse cx="{cx+6}" cy="293" rx="2.4" ry="1.6" fill="{cd}"/>'
+    for ex in (cx - 24, cx + 24):
+        up += (f'<circle cx="{ex}" cy="280" r="12" fill="{cg}" stroke="{cd}" stroke-width="2"/>'
+               f'<circle cx="{ex}" cy="279" r="7.5" fill="#fff8e1"/><rect x="{ex-1.6}" y="272.5" width="3.2" height="13" rx="1.6" fill="#1f2937"/>'
+               f'<circle cx="{ex-2.6}" cy="275.5" r="1.5" fill="#ffffff"/>')
+    o.append(f'<g>{up}<animateTransform attributeName="transform" type="translate" dur="3s" repeatCount="indefinite" '
+             f'values="0,0;0,0;0,10;0,0" keyTimes="0;.6;.75;1"/></g>')
+    o.append('</g>')
     # water in front of the submerged half (unscaled, full width)
     TF = 'transform="translate(438,330) scale(.78) translate(-452,-356)"'
     TD = 'transform="translate(438,330) scale(.9) translate(-452,-356)"'
